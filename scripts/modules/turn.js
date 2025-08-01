@@ -216,9 +216,9 @@ export const registerTurn = () => {
       //if tableRoll is true
       //and random monsters are active
 
-      if ((turnData.dungeon.procCount - 1) >= turnData.dungeon.proc) {  // gygax75 fix for starting on turn zero (bug with OSR Helper, Rest works correctly off zero)
+      if ((turnData.dungeon.procCount + 1) >= turnData.dungeon.proc) {  // gygax75 fix for starting on turn zero (bug with OSR Helper)
         //if number of turns since last random monster roll is greater than or equal to the random check interval
-        turnData.dungeon.procCount = 0; //resest number of turns since last random check
+        turnData.dungeon.procCount = -1; //resest number of turns since last random check, gygax75 fix for starting on turn zero (bug with OSR Helper)
 
         // await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData); //update settings data <--------
         const theRoll = await new Roll('1d6').evaluate({ async: true });
@@ -442,12 +442,8 @@ export const registerTurn = () => {
       let penalty = `<p style ="color: firebrick">${game.i18n.localize("OSRH.turn.restPenalty")}</p>`;
       turnData[type].restWarnCount++;
 
-      if (count == 6) {
+      if (count >= 6) {  // gygax75, continuously show the warning until they rest.
         content += penalty;
-      }
-      if (turnData[type].restWarnCount >= 5) {
-        content += penalty;
-        turnData[type].restWarnCount = 0;
       }
       
       await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData);
@@ -455,7 +451,7 @@ export const registerTurn = () => {
       ChatMessage.create(chatData);
       return;
     }
-    if (count > 3) {
+    if (count > 4) {  // gygax75, only warn after the fifth turn is completed.
       chatData.content = `<p style="color: orangered">${game.i18n.localize("OSRH.turn.mustRestSoon")}</p>`;
       ChatMessage.create(chatData);
       return;
