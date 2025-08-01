@@ -469,6 +469,7 @@ export const registerTurn = () => {
       data.dungeon.session++;
       data.dungeon.total++;
       data.dungeon.rSprite = true;
+      data.dungeon.procCount++;  // gygax75, increment proc count for dungeon on rest to keep correct wandering monster count
     }
     if (type === 'travel') {
       data.travel.rest = 0;

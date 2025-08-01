@@ -255,7 +255,7 @@ export function registerOsrActiveEffectModule() {
         const selfData = await this.effectListGetData(selfFx, 'self');
         const otherData = await this.effectListGetData(otherFx, 'other');
         let actorObj = {
-          name: actor.name,
+          name: actor?.name || '',  // gygax75, added name for empty actors
           uuid: actorList[i],
           self: selfData,
           other: otherData
