@@ -216,7 +216,7 @@ export const registerTurn = () => {
       //if tableRoll is true
       //and random monsters are active
 
-      if (turnData.dungeon.procCount >= turnData.dungeon.proc) {
+      if ((turnData.dungeon.procCount - 1) >= turnData.dungeon.proc) {  // gygax75 fix for starting on turn zero (bug with OSR Helper, Rest works correctly off zero)
         //if number of turns since last random monster roll is greater than or equal to the random check interval
         turnData.dungeon.procCount = 0; //resest number of turns since last random check
 
