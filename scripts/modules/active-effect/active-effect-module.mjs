@@ -518,6 +518,11 @@ export function registerOsrActiveEffectModule() {
       if (!effect?.isInf) {
         //get actor from uuid
         let actor = await fromUuid(effect.target);
+        if (!actor) {
+            console.log(`Actor not found for effect target '${effect?.target}' from effect name '${effect?.name}'.  Continuing with next effect.`);
+            continue;
+        }
+
         //if token get token actor
         if (actor.collectionName == 'tokens') actor = actor.actor;
         let activeEffect = await actor.getEmbeddedDocument('ActiveEffect', effect.effectId);
