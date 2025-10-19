@@ -65,7 +65,8 @@
         <footer class="dungeon">
         {{#if isGM}}
           <a id="d-rest-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.rest"}} "><i class="fa-solid fa-campground"></i></a>
-          <a id="save-settings"class="hidden save-settings light-icon"><i class="fa-solid fa-floppy-disk"></i></a>
+          <a id="d-undo-btn" class="light-icon" title="{{localize "OSRH.ui.undo"}}"><i class="fa-solid fa-rotate-left"></i></a>
+          <a id="d-redo-btn" class="light-icon" title="{{localize "OSRH.ui.redo"}}"><i class="fa-solid fa-rotate-right"></i></a>
           <a id="dungeon-turn-advance-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.advDunTurn"}} "><i class="fa-solid fa-forward"></i></a>
         {{/if}}
         </footer>
@@ -170,7 +171,8 @@
           <footer class="travel">
           {{#if isGM}}
             <a id="t-rest-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.rest"}} "><i class="fa-solid fa-campground"></i></a>
-            <a id="save-settings"class="hidden save-settings light-icon"><i class="fa-solid fa-floppy-disk"></i></a>
+            <a id="t-undo-btn" class="light-icon" title="{{localize "OSRH.ui.undo"}}"><i class="fa-solid fa-rotate-left"></i></a>
+            <a id="t-redo-btn" class="light-icon" title="{{localize "OSRH.ui.redo"}}"><i class="fa-solid fa-rotate-right"></i></a>
             <a id="travel-turn-advance-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.advTravTurn"}} "><i class="fa-solid fa-forward"></i></a>
           {{/if}}
           </footer>

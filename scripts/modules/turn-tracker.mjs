@@ -62,6 +62,10 @@ export class OSRHTurnTracker extends FormApplication {
     const terrainSelect = html.find('#terrain')[0];
     const dRestBtn = html.find('#d-rest-btn')[0];
     const tRestBtn = html.find('#t-rest-btn')[0];
+    const dUndoBtn = html.find('#d-undo-btn')[0];
+    const tUndoBtn = html.find('#t-undo-btn')[0];
+    const dRedoBtn = html.find('#d-redo-btn')[0];
+    const tRedoBtn = html.find('#t-redo-btn')[0];
     const forageCheck = html.find('#forage-check')[0];
     const navCheck = html.find('#navigation-check')[0];
     const encSelectEls = html.find('.d-enc-select');
@@ -148,6 +152,22 @@ export class OSRHTurnTracker extends FormApplication {
         e.preventDefault();
         await OSRH.turn.rest('travel');
         OSRH.socket.executeForEveryone('refreshTurnTracker');
+      });
+      dUndoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.undo();
+      });
+      tUndoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.undo();
+      });
+      dRedoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.redo();
+      });
+      tRedoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.redo();
       });
       dLvlUp.addEventListener('click', (e) => {
         this.turnData.dungeon.lvl++;

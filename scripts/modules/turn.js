@@ -1,5 +1,7 @@
 export const registerTurn = () => {
   OSRH.turn = OSRH.turn || {};
+  OSRH.turn.undoStack = [];
+  OSRH.turn.redoStack = [];
 
   const osrTime = {};
   //increments game-worldtime by input amount
@@ -187,7 +189,10 @@ export const registerTurn = () => {
   };
   OSRH.turn.dungeonTurn = async function () {
     let turnMsg = await game.settings.get(`${OSRH.moduleName}`, 'dungeonTurnNotificiation');
-    const data = foundry.utils.deepClone(await game.settings.get(`${OSRH.moduleName}`, 'turnData'));
+    const originalData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+    OSRH.turn.undoStack.push(originalData);
+    OSRH.turn.redoStack = [];
+    const data = foundry.utils.deepClone(originalData);
     const encTableName = data.dungeon.eTables[data.dungeon.lvl - 1];
     let encTable = null;
     let reactTable = null;
@@ -279,7 +284,10 @@ export const registerTurn = () => {
 
   OSRH.turn.travelTurn = async function () {
     let turnMsg = await game.settings.get(`${OSRH.moduleName}`, 'dungeonTurnNotificiation');
-    let turnData = foundry.utils.deepClone(await game.settings.get(`${OSRH.moduleName}`, 'turnData'));
+    const originalData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+    OSRH.turn.undoStack.push(originalData);
+    OSRH.turn.redoStack = [];
+    let turnData = foundry.utils.deepClone(originalData);
     let travelData = turnData.travel;
     const encTableName = travelData.eTable;
     let encTable;
@@ -461,7 +469,10 @@ export const registerTurn = () => {
   //rest function
   OSRH.turn.rest = async function (type = 'dungeon') {
     const whisper = await game.settings.get(`${OSRH.moduleName}`, 'whisperRest');
-    const data = foundry.utils.deepClone(await game.settings.get(`${OSRH.moduleName}`, 'turnData'));
+    const originalData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+    OSRH.turn.undoStack.push(originalData);
+    OSRH.turn.redoStack = [];
+    const data = foundry.utils.deepClone(originalData);
     const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
     if (type === 'dungeon') {
       data.dungeon.rest = 0;
@@ -519,6 +530,34 @@ export const registerTurn = () => {
     ChatMessage.create(chatData);
   };
 
+  OSRH.turn.undo = async function () {
+    if (OSRH.turn.undoStack.length > 0) {
+      const currentData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+      OSRH.turn.redoStack.push(currentData);
+      const lastData = OSRH.turn.undoStack.pop();
+      await game.settings.set(`${OSRH.moduleName}`, 'turnData', lastData);
+      await OSRH.turn.updateJournal();
+      OSRH.turn.refreshTurnTracker();
+      ui.notifications.notify('Last action undone.');
+    } else {
+      ui.notifications.warn('No action to undo.');
+    }
+  };
+
+  OSRH.turn.redo = async function () {
+    if (OSRH.turn.redoStack.length > 0) {
+      const currentData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+      OSRH.turn.undoStack.push(currentData);
+      const nextData = OSRH.turn.redoStack.pop();
+      await game.settings.set(`${OSRH.moduleName}`, 'turnData', nextData);
+      await OSRH.turn.updateJournal();
+      OSRH.turn.refreshTurnTracker();
+      ui.notifications.notify('Last action redone.');
+    } else {
+      ui.notifications.warn('No action to redo.');
+    }
+  };
+
   OSRH.turn.lightTurnRemaining = function (actorId) {
     let lightData;
     for (let user of game.users.contents) {
@@ -530,7 +569,7 @@ export const registerTurn = () => {
 
     if (lightData?.[actorId].lightLit) {
       let chatData = {
-        content: '',
+        content: '' ,
         whisper: [game.user.id]
       };
       let type, turnsLeft;

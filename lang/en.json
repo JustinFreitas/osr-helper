@@ -87,6 +87,8 @@
   "OSRH.ui.showTurnCount": "Show Turn Count",
   "OSRH.ui.resetSession": "Reset Session Count",
   "OSRH.ui.resetTotal": "Reset Total Count",
+  "OSRH.ui.undo": "Undo",
+  "OSRH.ui.redo": "Redo",
   "OSRH.ui.actorItemReport": "Actor Item Report",
   "OSRH.ui.light": "Light Toggle",
   "OSRH.ui.lightTurnsRemaining": "Light Turns Remaining",
