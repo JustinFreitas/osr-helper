@@ -2171,4 +2171,10 @@ aside#hotbar {
   margin: 0.5rem 0;
 }
 
+.app.osrh.turn-tracker .warning .count-label,
+.app.osrh.turn-tracker .warning .count-value,
+.app.osrh.turn-tracker .warning .check-label {
+  color: red;
+}
+
 /*# sourceMappingURL=main.css.map */

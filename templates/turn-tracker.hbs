@@ -41,7 +41,7 @@
               <div class="count-label total">{{localize "OSRH.turnTracker.total"}}  :</div> 
               <div class="count-value" id="total-count">{{turnData.dungeon.total}}</div>
             </div>
-            <div class="row">
+            <div class="row {{#if (gte turnData.dungeon.rest 5)}}warning{{/if}}">
               <div class="count-label current">{{localize "OSRH.turnTracker.sinceRest"}} :</div> 
               <div class="count-value" id="current-count">{{turnData.dungeon.rest}}</div>
             </div>
@@ -152,7 +152,7 @@
               </div>
             </div>
             {{/if}}
-            <div class="input-block travel-rest-count">
+            <div class="input-block travel-rest-count {{#if (gte turnData.travel.rest 5)}}warning{{/if}}">
               <div class="check-label">{{localize "OSRH.turnTracker.sinceRest"}} </div>
               <div class="check-label rest-turns">{{turnData.travel.rest}}</div>
             </div>
