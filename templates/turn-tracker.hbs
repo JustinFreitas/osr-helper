@@ -32,6 +32,11 @@
             <img id="bg-5"src="modules/osr-helper/images/tts-5.webp" class="sprite hidden">
           </section>
           <div class="count-cont">
+            <div class="row">
+              <div class="count-label">Current Turn:</div>
+              <div class="count-value">{{onTurn}}</div>
+            </div>
+            <hr>
             <h2>{{localize "OSRH.turnTracker.dungeonTurncounts"}} </h2>
             <div class="row">
               <div class="count-label session">{{localize "OSRH.turnTracker.session"}} :</div> 
@@ -61,11 +66,16 @@
                 {{/if}}
               </div>
             </div>
+            <div class="notes-container">
+              <label for="d-notes">Notes</label>
+              <textarea name="d-notes" id="d-notes">{{turnData.dungeon.notes}}</textarea>
+            </div>
           </div>
         <footer class="dungeon">
         {{#if isGM}}
           <a id="d-rest-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.rest"}} "><i class="fa-solid fa-campground"></i></a>
           <a id="d-undo-btn" class="light-icon" title="{{localize "OSRH.ui.undo"}}"><i class="fa-solid fa-rotate-left"></i></a>
+          <a id="d-time-btn" class="light-icon" title="Output Time"><i class="fa-solid fa-hourglass-clock"></i></a>
           <a id="d-redo-btn" class="light-icon" title="{{localize "OSRH.ui.redo"}}"><i class="fa-solid fa-rotate-right"></i></a>
           <a id="dungeon-turn-advance-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.advDunTurn"}} "><i class="fa-solid fa-forward"></i></a>
         {{/if}}
@@ -139,6 +149,10 @@
               </div>
               {{/each}}
               
+              <div class="notes-container">
+                <label for="t-notes">Notes</label>
+                <textarea name="t-notes" id="t-notes">{{turnData.travel.notes}}</textarea>
+              </div>
             </div>
           </section>
            
@@ -167,7 +181,6 @@
             </div>
             {{/if}}
           </section>
-           
           <footer class="travel">
           {{#if isGM}}
             <a id="t-rest-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.rest"}} "><i class="fa-solid fa-campground"></i></a>

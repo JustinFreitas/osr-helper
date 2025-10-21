@@ -30,6 +30,7 @@ export class OSRHTurnTracker extends FormApplication {
   async getData() {
     this.turnData = foundry.utils.deepClone(await game.settings.get('osr-helper', 'turnData'));
     const context = super.getData();
+    context.onTurn = this.turnData.dungeon.total + 1;
     const partyObj = OSRH.util.getPartyActors();
 
     const tMod = this.terrainMod[this.turnData.travel.terrain];
@@ -85,6 +86,26 @@ export class OSRHTurnTracker extends FormApplication {
     const dLvlUp = html.find('#d-lvl-up')[0];
     const dLvlDn = html.find('#d-lvl-dn')[0];
     const trackRationExp = html.find(`#track-ration-expiration`)[0];
+    const dNotes = html.find('#d-notes')[0];
+    const tNotes = html.find('#t-notes')[0];
+
+    dNotes.addEventListener('change', async (e) => {
+      this.turnData.dungeon.notes = e.target.value;
+      await game.settings.set('osr-helper', 'turnData', this.turnData);
+    });
+    tNotes.addEventListener('change', async (e) => {
+      this.turnData.travel.notes = e.target.value;
+      await game.settings.set('osr-helper', 'turnData', this.turnData);
+    });
+
+    const dTimeBtn = html.find('#d-time-btn')[0];
+    if (dTimeBtn) {
+      dTimeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        OSRH.turn.outputTime('dungeon');
+      });
+    }
+
     // gm only controls
     if (this.isGM) {
       terrainSelect.value = this.turnData.travel.terrain;
@@ -302,6 +323,8 @@ export class OSRHTurnTracker extends FormApplication {
     const dRollTarget = html.find('#d-encounter-target')[0];
     const dungeonLvl = html.find('#d-level')[0];
     const trackRationExp = html.find('#track-ration-expiration')[0];
+    const dNotes = html.find('#d-notes')[0];
+    const tNotes = html.find('#t-notes')[0];
     const encTables = this.getEncounterTables(html);
     const saveSettings = html.find('.save-settings');
     const terrainSelect = html.find('#terrain')[0];
@@ -313,7 +336,6 @@ export class OSRHTurnTracker extends FormApplication {
     this.turnData.travel.rTable = tReactTable.value;
     this.turnData.travel.proc = parseInt(tEncFreq.value);
     this.turnData.travel.rollTarget = parseInt(tRollTarget.value);
-
     this.turnData.dungeon.eTables = encTables;
     this.turnData.dungeon.rollEnc = dEncRoll.checked;
     this.turnData.dungeon.rollReact = dReactRoll.checked;
@@ -321,6 +343,8 @@ export class OSRHTurnTracker extends FormApplication {
     this.turnData.dungeon.proc = parseInt(dEncFreq.value);
     this.turnData.dungeon.rollTarget = parseInt(dRollTarget.value);
     this.turnData.dungeon.lvl = parseInt(dungeonLvl.value);
+    this.turnData.dungeon.notes = dNotes.value;
+    this.turnData.travel.notes = tNotes.value;
     this.turnData.global
       ? (this.turnData.global.trackRationExp = trackRationExp.checked)
       : (this.turnData.global = { trackRationExp: trackRationExp.checked });

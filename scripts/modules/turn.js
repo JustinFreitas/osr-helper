@@ -44,6 +44,8 @@ export const registerTurn = () => {
             restWarnCount: 0,
             session: 0,
             total: 0,
+            notes: '',
+            noteHistory: []
           },
           travel: {
             session: 0,
@@ -58,7 +60,9 @@ export const registerTurn = () => {
             rollTarget: 2,
             restWarnCount: 0,
             terrain: 'clear',
-            duration: 24
+            duration: 24,
+            notes: '',
+            noteHistory: []
           }
     };
         break;
@@ -73,6 +77,7 @@ export const registerTurn = () => {
     const data = foundry.utils.deepClone(await game.settings.get(`${OSRH.moduleName}`, 'turnData'));
     if (type) {
       data[type].session = 0;
+      data[type].notes = '';
     }
     await game.settings.set(`${OSRH.moduleName}`, 'turnData', data);
     OSRH.turn.updateJournal();
@@ -85,15 +90,21 @@ export const registerTurn = () => {
       data[type].procCount = 0;
       data[type].rest = 0;
       data[type].total = 0;
+      data[type].notes = '';
+      data[type].noteHistory = [];
     } else {
       data.dungeon.session = 0;
       data.dungeon.procCount = 0;
       data.dungeon.rest = 0;
       data.dungeon.total = 0;
+      data.dungeon.notes = '';
+      data.dungeon.noteHistory = [];
       data.travel.session = 0;
       data.travel.procCount = 0;
       data.travel.rest = 0;
       data.travel.total = 0;
+      data.travel.notes = '';
+      data.travel.noteHistory = [];
     }
     await game.settings.set(`${OSRH.moduleName}`, 'turnData', data);
     await OSRH.turn.updateJournal();
@@ -214,6 +225,8 @@ export const registerTurn = () => {
       }
     }
     const turnData = await OSRH.turn.incrementTurnData('dungeon', false, data);
+    turnData.dungeon.noteHistory.push(originalData.dungeon.notes);
+    turnData.dungeon.notes = '';
     if (await game.settings.get(`${OSRH.moduleName}`, 'restMessage')) {
       OSRH.turn.restMsg(turnData.dungeon.rest, 'dungeon', data); //generate chat message regarding rest status
     }
@@ -308,6 +321,8 @@ export const registerTurn = () => {
     }
 
     turnData = foundry.utils.deepClone(await OSRH.turn.incrementTurnData('travel', true, turnData));
+    turnData.travel.noteHistory.push(originalData.travel.notes);
+    turnData.travel.notes = '';
     travelData = turnData.travel;
     if (await game.settings.get(`${OSRH.moduleName}`, 'restMessage')) {
       OSRH.turn.restMsg(turnData.travel.rest, 'travel'); //generate chat message regarding rest status
@@ -470,6 +485,12 @@ export const registerTurn = () => {
   OSRH.turn.rest = async function (type = 'dungeon') {
     const whisper = await game.settings.get(`${OSRH.moduleName}`, 'whisperRest');
     const originalData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+    if (type === 'dungeon' && originalData.dungeon.notes === '') {
+      originalData.dungeon.notes = 'Rest turn.';
+    }
+    if (type === 'travel' && originalData.travel.notes === '') {
+      originalData.travel.notes = 'Rest turn.';
+    }
     OSRH.turn.undoStack.push(originalData);
     OSRH.turn.redoStack = [];
     const data = foundry.utils.deepClone(originalData);
@@ -481,12 +502,16 @@ export const registerTurn = () => {
       data.dungeon.total++;
       data.dungeon.rSprite = true;
       data.dungeon.procCount++;  // gygax75, increment proc count for dungeon on rest to keep correct wandering monster count
+      data.dungeon.noteHistory.push(originalData.dungeon.notes);
+      data.dungeon.notes = '';
     }
     if (type === 'travel') {
       data.travel.rest = 0;
       data.travel.restWarnCount = 0;
       data.travel.session++;
       data.travel.total++;
+      data.travel.noteHistory.push(originalData.travel.notes);
+      data.travel.notes = '';
     }
     
     await game.settings.set(`${OSRH.moduleName}`, 'turnData', data);
@@ -556,6 +581,43 @@ export const registerTurn = () => {
     } else {
       ui.notifications.warn('No action to redo.');
     }
+  };
+
+  OSRH.turn.outputTime = async function (type = 'dungeon') {
+    const turnData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
+    const noteHistory = turnData[type].noteHistory;
+
+    if (noteHistory.length === 0) {
+      const chatData = {
+        content: 'No turns completed yet.',
+        whisper: [game.user.id]
+      };
+      ChatMessage.create(chatData);
+      return;
+    }
+
+    const totalTurns = noteHistory.length;
+    const totalHours = Math.floor((totalTurns * 10) / 60);
+    const remainingTotalTurns = totalTurns % 6;
+    const totalTimeString = `${totalHours}Hr:${remainingTotalTurns}Turn`;
+
+    let chatOutput = `<h2>Total Time Spent: ${totalTimeString}</h2><ul>`;
+    for (let i = 0; i < noteHistory.length; i++) {
+      const turnNumber = i + 1;
+      const turns = i + 1;
+      const hours = Math.floor((turns * 10) / 60);
+      const remainingTurns = turns % 6;
+      const timeString = `${hours}Hr:${remainingTurns}Turn`;
+      const note = noteHistory[i];
+      chatOutput += `<li>Turn ${turnNumber} - ${timeString} - ${note}</li>`;
+    }
+    chatOutput += '</ul>';
+
+    const chatData = {
+      content: chatOutput,
+      whisper: [game.user.id]
+    };
+    ChatMessage.create(chatData);
   };
 
   OSRH.turn.lightTurnRemaining = function (actorId) {
