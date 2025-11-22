@@ -51,11 +51,14 @@ export class OSRHTurnTracker extends FormApplication {
         return;
       }
       const table = await fromUuid(dragData.uuid);
-      const html = event.target.closest('.window-content');
       event.target.value = table.name;
-      this.showSaveBtn({ 0: html, length: 1 });
     }
-  }
+    if (dragData.type === 'JournalEntry' || dragData.type === 'JournalEntryPage') {
+      const entity = await fromUuid(dragData.uuid);
+      const link = `@UUID[${dragData.uuid}]{${entity.name}}`;
+      event.target.value += link;
+    }
+   }
   // dungeon turn
   activateListeners(html) {
     const advanceDungeonTurn = html.find('#dungeon-turn-advance-btn')[0];
@@ -93,10 +96,12 @@ export class OSRHTurnTracker extends FormApplication {
       this.turnData.dungeon.notes = e.target.value;
       await game.settings.set('osr-helper', 'turnData', this.turnData);
     });
+    dNotes.addEventListener('drop', (e) => this._onDrop(e));
     tNotes.addEventListener('change', async (e) => {
       this.turnData.travel.notes = e.target.value;
       await game.settings.set('osr-helper', 'turnData', this.turnData);
     });
+    tNotes.addEventListener('drop', (e) => this._onDrop(e));
 
     const dTimeBtn = html.find('#d-time-btn')[0];
     if (dTimeBtn) {
