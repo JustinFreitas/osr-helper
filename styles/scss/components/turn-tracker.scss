@@ -408,4 +408,13 @@
   .dungeon-config-tab select {
     width: 150px;
   }
+
+  textarea {
+    resize: none;
+  }
+
+  #d-notes,
+  #t-notes {
+    resize: none;
+  }
 }

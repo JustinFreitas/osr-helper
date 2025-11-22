@@ -1998,6 +1998,11 @@ aside#hotbar {
   border-radius: 0.5em;
   scrollbar-width: none;
   background-color: rgba(255, 255, 255, 0.5333333333);
+}
+
+textarea {
+  resize: none;
+}
   padding: 0.2em;
 }
 .app.osrh.turn-tracker .travel-tab .party-list.lg-list {
