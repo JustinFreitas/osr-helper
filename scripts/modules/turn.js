@@ -560,6 +560,13 @@ export const registerTurn = () => {
       const currentData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
       OSRH.turn.redoStack.push(currentData);
       const lastData = OSRH.turn.undoStack.pop();
+
+      // revert time
+      const dDiff = currentData.dungeon.total - lastData.dungeon.total;
+      const tDiff = currentData.travel.total - lastData.travel.total;
+      if (dDiff > 0) OSRH.turn.timePlus(-10, 'minute');
+      if (tDiff > 0) OSRH.turn.timePlus(-lastData.travel.duration, 'hour');
+
       await game.settings.set(`${OSRH.moduleName}`, 'turnData', lastData);
       await OSRH.turn.updateJournal();
       OSRH.turn.refreshTurnTracker();
@@ -574,6 +581,13 @@ export const registerTurn = () => {
       const currentData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
       OSRH.turn.undoStack.push(currentData);
       const nextData = OSRH.turn.redoStack.pop();
+
+      // advance time
+      const dDiff = nextData.dungeon.total - currentData.dungeon.total;
+      const tDiff = nextData.travel.total - currentData.travel.total;
+      if (dDiff > 0) OSRH.turn.timePlus(10, 'minute');
+      if (tDiff > 0) OSRH.turn.timePlus(nextData.travel.duration, 'hour');
+
       await game.settings.set(`${OSRH.moduleName}`, 'turnData', nextData);
       await OSRH.turn.updateJournal();
       OSRH.turn.refreshTurnTracker();
