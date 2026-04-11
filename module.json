@@ -9,11 +9,10 @@
       "flags": {}
     }
   ],
-  "version": "0.7.1-gygax75.5",
+  "version": "0.7.1-gygax75.6",
   "compatibility": {
     "minimum": "11",
-    "verified": "13",
-    "maximum": "13"
+    "verified": "14"
   },
   "styles": [
     "styles/main.css"

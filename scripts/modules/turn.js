@@ -146,7 +146,7 @@ export const registerTurn = () => {
         rollMod = canvas.tokens.controlled[0].actor.system.scores.cha.mod || 0;
       }
     }
-    let roll = new Roll('2d6+@mod', { mod: rollMod }).evaluate({ async: false });
+    let roll = await new Roll('2d6+@mod', { mod: rollMod }).evaluate({ async: true });
     //  game.dice3d.showForRoll(roll)
 
     let tRoll = roll.total; //Math.floor(Math.random() * 6 + 1) +  Math.floor(Math.random() * 6 + 1) + rollMod;

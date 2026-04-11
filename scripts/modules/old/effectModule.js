@@ -254,7 +254,7 @@ export const registerEffectModule = async function () {
   OSRH.effect.saveEffect = async function (ev) {
     ev.preventDefault();
     let effectObj = {
-      id: randomID(16)
+      id: foundry.utils.randomID(16)
     };
     let numInputs = this.element[0].querySelectorAll('input[type="number"]');
     let target = this.element[0].querySelector(`[type="radio"][name="target"]:checked`);

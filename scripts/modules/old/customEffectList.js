@@ -116,7 +116,7 @@ export const registerCustomEffectList = () => {
       const containerDiv = html.find('#effectDetails')[0];
       OSRH.util.oseHook(`${OSRH.moduleName}newEffectBtnToggle`, [newEffectBtn]);
       const formData = {
-        _id: randomID(16),
+        _id: foundry.utils.randomID(16),
         name: html.find('#effectName')[0].value,
         target: html.find('#targetName')[0].value,
         targetCheck: html.find('#targetCheck')[0].checked,

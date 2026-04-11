@@ -34,7 +34,7 @@ export class ManageCustomAttributes extends FormApplication {
       e.preventDefault();
       const coord = { top: this.options.top, left: this.options.left };
       const blankAttrib = {
-        id: randomID(),
+        id: foundry.utils.randomID(),
         name: '',
         abbr: '',
         value: 0,
@@ -78,7 +78,7 @@ export class ManageCustomAttributes extends FormApplication {
   }
   _addAttribute(event) {
     const attrib = {
-      id: randomID(),
+      id: foundry.utils.randomID(),
       name: '',
       abbr: '',
       value: 0,
