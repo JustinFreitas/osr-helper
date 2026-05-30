@@ -146,8 +146,8 @@ Hooks.once('ready', async () => {
   registerLocalizedData();
   registerSystemHooks();
   OSRH.ui.addUiControls();
-  await intializePackFolders();
-  hideForeignPacks();
+  // await intializePackFolders();
+  // hideForeignPacks();
 
   OSRH.util.setTheme();
   const turnData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
@@ -231,7 +231,7 @@ Hooks.on('updateCombat', (combat) => {
 
 // //effect report
 
-Hooks.on('renderActorSheet', async (sheetEl, html, actorObj) => {
+Hooks.on('renderActorSheet', async (sheetEl, html, actorObj, c) => {
   // itemPiles accomodation
   let itemPiles = actorObj.flags?.['item-piles']?.data?.enabled || null;
   if (!itemPiles) {
@@ -278,7 +278,7 @@ Hooks.on('renderActorSheet', async (sheetEl, html, actorObj) => {
           ccBtn.addEventListener('click', (e) => {
             e.preventDefault();
             sheetEl.render();
-            OSRH.util.curConDiag(actorObj);
+            OSRH.util.curConDiag(actorObj, sheetEl.object.uuid);
           });
           // custom attrib btn
           btnCont.appendChild(ccBtn);
