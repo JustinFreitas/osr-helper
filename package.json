@@ -1,0 +1,9 @@
+{
+  "name": "osr-helper",
+  "private": true,
+  "description": "Dev tooling for the OSR Helper Foundry VTT module. Not shipped with the module.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

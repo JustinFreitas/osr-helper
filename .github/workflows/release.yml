@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, Test & Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      # The release tag is the source of truth for the version.
+      # Strip a leading "v" if present (e.g. v0.7.8-gygax75.2 -> 0.7.8-gygax75.2).
+      - name: Resolve version from tag
+        id: vars
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $version"
+
+      - name: Stamp module.json (version, manifest, download)
+        env:
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const repo = process.env.REPO;            // owner/name
+          const tag = process.env.TAG;              // release tag
+          const version = process.env.VERSION;      // tag without leading v
+          const m = JSON.parse(fs.readFileSync('module.json', 'utf8'));
+          m.version = version;
+          m.url = `https://github.com/${repo}`;
+          // Stable URL so Foundry can detect future updates.
+          m.manifest = `https://github.com/${repo}/releases/latest/download/module.json`;
+          // Versioned asset for this specific release.
+          m.download = `https://github.com/${repo}/releases/download/${tag}/module.zip`;
+          fs.writeFileSync('module.json', JSON.stringify(m, null, 2) + '\n');
+          console.log(`Stamped module.json: version=${version}`);
+          console.log(`  manifest=${m.manifest}`);
+          console.log(`  download=${m.download}`);
+          NODE
+
+      - name: Package module zip
+        run: |
+          zip -r module.zip . \
+            -x '.git/*' \
+            -x '.github/*' \
+            -x '.gitignore' \
+            -x '.gitattributes' \
+            -x '.vscode/*' \
+            -x 'test/*' \
+            -x 'package.json' \
+            -x 'package-lock.json' \
+            -x 'node_modules/*' \
+            -x '*.zip' \
+            -x 'css-compile.sh'
+          echo "--- zip contents ---"
+          unzip -l module.zip
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" module.json module.zip --clobber

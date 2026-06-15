@@ -1,2 +1,11 @@
 packs/** binary
 style/scss export-ignore
+
+# Enforce LF for files executed or parsed on Linux CI runners so Windows
+# checkouts don't introduce CRLF that breaks workflow shell scripts.
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.json text eol=lf

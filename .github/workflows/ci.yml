@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No dependencies are required (tests use Node's built-in runner),
+      # but install gracefully if a lockfile is ever added.
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate module.json
+        run: node -e "JSON.parse(require('fs').readFileSync('module.json','utf8')); console.log('module.json is valid JSON')"
+
+      - name: Check module.json id matches repo
+        run: |
+          id=$(node -p "require('./module.json').id")
+          echo "module id: $id"
+          test "$id" = "osr-helper" || { echo "::error::module.json id is not 'osr-helper'"; exit 1; }

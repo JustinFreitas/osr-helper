@@ -1,4 +1,11 @@
 import { OSRHAttack } from './attack.mjs';
+import {
+  getNestedValue,
+  convertToSeconds,
+  convertFromSeconds,
+  convertTime,
+  hasPermission
+} from '../lib/pure-helpers.mjs';
 export const registerUtil = () => {
   OSRH.util.singleGM = function () {
     return game.users.filter((u) => u.active && u.isGM)[0];
@@ -752,14 +759,7 @@ export const registerUtil = () => {
     }
     return lang;
   };
-  OSRH.util.getNestedValue = function (obj, path) {
-    path = path.split('.');
-    let len = path.length;
-    for (let i = 0; i < len; i++) {
-      obj = obj?.[path[i]];
-    }
-    return obj;
-  };
+  OSRH.util.getNestedValue = getNestedValue;
   OSRH.util.getItem = async function (item, parent) {
     let itemData = null;
     if (item) {
@@ -790,52 +790,10 @@ export const registerUtil = () => {
     // new OSRH.partySheet().render(true);
     Hooks.call('renderOSRHPartySheet');
   };
-  OSRH.util.convertToSeconds = function (duration, unit) {
-    const inc = {
-      minute: 60,
-      turn: 600,
-      hour: 3600,
-      day: 86400
-    };
-    return Math.round(parseInt(duration) * inc[unit]);
-  };
-  OSRH.util.convertFromSeconds = function (seconds, unit) {
-    const inc = {
-      minute: 60,
-      turn: 600,
-      hour: 3600,
-      day: 86400
-    };
-
-    return Math.floor(seconds / inc[unit]);
-  };
-  OSRH.util.convertTime = function (duration, type, disp = false) {
-    const inc = {
-      minute: 60,
-      turn: 600,
-      hour: 3600,
-      day: 86400
-    };
-    let val = duration / inc[type];
-    let rem = val % 1 ? true : false;
-    if (disp && rem && val > 1) {
-      return `${Math.floor(val)}+`;
-    }
-    return Math.floor(val);
-    // const fn = {
-    //   0: (d, u)=>Math.round(parseInt(d) * inc[u]), //'get duration in seconds'
-    //   1: (d, u)=>Math.floor(d / inc[u]), //'get duration in new type from seconds'
-    //   2: (d, u, nt)=>{ //'day to hours'
-
-    //   },
-    //   3: (d,u)=>{ //day to minutes
-    //   }
-    // }
-    // fn[2]()
-  };
-  OSRH.util.hasPermission = function (actor, uId, pLvl) {
-    return actor.ownership?.[uId] >= pLvl ? true : false;
-  };
+  OSRH.util.convertToSeconds = convertToSeconds;
+  OSRH.util.convertFromSeconds = convertFromSeconds;
+  OSRH.util.convertTime = convertTime;
+  OSRH.util.hasPermission = hasPermission;
 };
 
 export const intializePackFolders = async () => {
