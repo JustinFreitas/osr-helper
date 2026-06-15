@@ -1,17 +1,17 @@
 # OSR-helper module
 
-Created by RabidOwlbear.
+Originally created by RabidOwlbear (support via Patreon: https://patreon.com/RabidOwlbear).
 
-Supprted via patreon: https://patreon.com/RabidOwlbear
+This is the **gygax75** fork maintained at [JustinFreitas/osr-helper](https://github.com/JustinFreitas/osr-helper), with additional fixes and compatibility updates. Releases are published under versions like `0.7.8-gygax75.x`.
 
-An unimaginatively named module that aims to assist with light, time, and resource management. For use in games using the Foundry Vtt implementation of the 'Old School Essentials' system.
+An unimaginatively named module that aims to assist with light, time, and resource management. For use in games using the Foundry Vtt implementation of the 'Old School Essentials' system (and other supported OSR systems).
 This module provides several macros found in a compendium named "OSR-helper Macros".
 
 ### installation
 
-install using the following manifest url:
+Install using the following manifest url:
 
-https://raw.githubusercontent.com/RabidOwlbear/osr-helper/master/module.json
+https://github.com/JustinFreitas/osr-helper/releases/latest/download/module.json
 
 ### usage
 
