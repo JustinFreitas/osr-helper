@@ -9,106 +9,8 @@ export const registerUtil = () => {
   OSRH.util.osrTick = async function () {
     const singleGM = OSRH.util.singleGM();
     if (singleGM && game.user.id === singleGM.id) {
-      let lastTick = await game.settings.get(`${OSRH.moduleName}`, 'lastTick');
-      // await OSRH.util.osrLightTick(lastTick);
-      // OSRH.util.osrEffectTick(lastTick);
-
       //update lightTick
-
       await game.settings.set(`${OSRH.moduleName}`, 'lastTick', game.time.worldTime);
-    }
-  };
-  // delete
-  OSRH.util.osrLightTick = async function (lastTick) {
-    const singleGM = OSRH.util.singleGM();
-    if (singleGM && game.user.id === singleGM.id) {
-      //get data
-      const data = {
-        light: null
-      };
-      const curTime = game.time.worldTime;
-      const elapsed = (curTime - lastTick) / 60;
-      //manage light duration
-      for (let user of game.users.contents) {
-        data.light = user.getFlag(`${OSRH.moduleName}`, 'lightData');
-        //loop through actorIds in light flag
-        for (let actorId in data.light) {
-          //If actor does not have light lit...
-          if (data.light[actorId].lightLit) {
-            //loop through the light types in data.actorId
-            for (let lightType in data.light[actorId]) {
-              //check if light isOn = true
-              if (data.light[actorId][lightType].isOn) {
-                //decrement duration by time elapsed in minutes
-                data.light[actorId][lightType].duration -= elapsed;
-                //if duration is greater than maximum, set to maximum.
-                if (data.light[actorId][lightType].duration > OSRH.data.lightSource[lightType].duration) {
-                  data.light[actorId][lightType].duration = OSRH.data.lightSource[lightType].duration;
-                }
-                //on last turn shrink light radius
-                if (data.light[actorId][lightType].duration <= 10) {
-                  OSRH.util.updateTokens(actorId, OSRH.data.lightSource[lightType], true);
-                }
-                // if duration <= 0 run lightOff function, and delete light type object
-                if (data.light[actorId][lightType].duration <= 0) {
-                  // const actor = await game.actors.contents.find((a) => a.id == actorId);
-                  const actor = await game.actors.get(actorId);
-                  const item = await actor.items.getName(OSRH.data.lightSource[lightType].name);
-                  const newCount = item.system.quantity.value - 1;
-                  if (newCount <= 0) {
-                    await item.delete();
-                  } else {
-                    await item.update({
-                      data: {
-                        quantity: {
-                          value: newCount
-                        }
-                      }
-                    });
-                  }
-
-                  data.light[actorId].lightLit = false;
-
-                  OSRH.light.osrLightOff(actorId);
-                  delete data.light[actorId][lightType];
-                  if (Object.keys(data.light[actorId]).length == 1) {
-                    delete data.light[actorId];
-                  }
-                }
-              }
-            }
-          }
-        }
-        user.unsetFlag(`${OSRH.moduleName}`, 'lightData');
-        user.setFlag(`${OSRH.moduleName}`, 'lightData', data.light);
-      }
-    }
-  };
-  // delete
-  OSRH.util.osrEffectTick = function (lastTick) {
-    const singleGM = OSRH.util.singleGM();
-    if (singleGM && game.user.id === singleGM.id) {
-      const curTime = game.time.worldTime;
-      const elapsed = (curTime - lastTick) / 60;
-      for (let user of game.users.contents) {
-        let effectData = user.getFlag(`${OSRH.moduleName}`, 'effectData');
-        for (let effectId in effectData) {
-          let effect = effectData[effectId];
-          effect.duration -= elapsed;
-
-          if (effect.duration <= 0) {
-            const msgData = `<h3 style="color: red;"> ${game.i18n.localize('OSRH.util.notification.effectExpired')}</h3>
-              <div>${game.i18n.localize('OSRH.util.notification.customEffect')} ${
-              effectData[effectId].name
-            } ${game.i18n.localize('OSRH.util.notification.hasExpired')}`;
-            OSRH.util.ChatMessage(effectData[effectId], effectData[effectId].userId, msgData);
-            delete effectData[effectId];
-          }
-        }
-
-        user.unsetFlag(`${OSRH.moduleName}`, 'effectData');
-        user.setFlag(`${OSRH.moduleName}`, 'effectData', effectData);
-      }
     }
   };
   OSRH.util.setLightFlag = async function (data) {
@@ -151,9 +53,8 @@ export const registerUtil = () => {
     const journal = game.journal.getName(await game.settings.get(`${OSRH.moduleName}`, 'timeJournalName'));
     let flags = journal.flags.world.osrLights;
     delete flags[actorId];
-    journal.unsetFlag('world', 'osrLights');
-    journal.setFlag('world', 'osrLights', flags);
-    actor.setFlag('world', 'lightLit', false);
+    await journal.setFlag('world', 'osrLights', flags);
+    await actor.setFlag('world', 'lightLit', false);
   };
 
   OSRH.util.osrClearUserFlag = async function (data) {
@@ -163,11 +64,12 @@ export const registerUtil = () => {
   };
   // used
   OSRH.util.resetMonsterAttacks = async function () {
+    if (!game.combats.active) return;
     for (let combatant of game.combats.active.combatants.contents) {
       const actor = combatant.actor;
-      if (actor.type == 'monster') {
+      if (actor?.type == 'monster') {
         for (let item of actor.items.contents) {
-          if (item.type == 'weapon') {
+          if (item.type == 'weapon' && item.system?.counter) {
             let count = item.system.counter.max;
             await item.update({ system: { counter: { value: count } } });
           }
@@ -210,7 +112,7 @@ export const registerUtil = () => {
   // used
   OSRH.util.centerHotbar = async function () {
     let hotbar = document.getElementById('hotbar');
-    if (!game.version > 12 && await game.settings.get(`${OSRH.moduleName}`, 'centerHotbar')) {
+    if (parseInt(game.version) <= 12 && await game.settings.get(`${OSRH.moduleName}`, 'centerHotbar')) {
       document.documentElement.style.setProperty('--hotbar-center', `${window.innerWidth / 2 - 578}px`);
       hotbar.classList.add('center-hotbar');
     } else {
@@ -854,7 +756,7 @@ export const registerUtil = () => {
     path = path.split('.');
     let len = path.length;
     for (let i = 0; i < len; i++) {
-      obj = obj[path[i]];
+      obj = obj?.[path[i]];
     }
     return obj;
   };

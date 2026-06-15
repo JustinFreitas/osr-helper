@@ -15,12 +15,14 @@ data: {
     const tags = false//OSRH.systemData.tags;
     const qPath = OSRH.systemData.paths.itemQty;
     let actor
-    if(!actorId){
-      if(OSRH.util.singleSelected()){
-        actor = canvas.tokens.controlled[0].actor
-      }else{
-        actor = await game.actors.find((a) => a.id == actorId)
-      }
+    if(actorId){
+      actor = game.actors.get(actorId)
+    }else if(OSRH.util.singleSelected()){
+      actor = canvas.tokens.controlled[0].actor
+    }
+    if(!actor){
+      ui.notifications.error(game.i18n.localize('OSRH.util.notification.singleToken'))
+      return
     }
 
     let rationOptions = '';
@@ -91,7 +93,7 @@ data: {
       let context = super.getData();
       let rationData = this.rationData;
       let trackExp = typeof rationData !== 'undefined' ? this.rationData?.trackExpiration : true
-      context.name = this.rationData?.namel;
+      context.name = this.rationData?.name;
       context.trackExpiration = trackExp;//this.rationData?.trackExpiration || true;
       context.rationDuration = this.rationData?.duration?.value || 7;
       context.durationType = this.rationData?.duration?.type || 'day'

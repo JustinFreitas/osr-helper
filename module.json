@@ -9,7 +9,7 @@
       "flags": {}
     }
   ],
-  "version": "0.7.8-gygax75.1",
+  "version": "0.7.8-gygax75.2",
   "compatibility": {
     "minimum": "13",
     "verified": "14"
@@ -257,7 +257,7 @@
         "name": "cn",
         "color": "#214e14",
         "sorting": "a",
-        "packs": ["osr-helper-items-cn","osr-helper-items-hyperborea-cn","osr-helper-items-wwn-cn","osr-helper-items-dcc-cn"]
+        "packs": ["osr-helper-items-cn"]
       }
     ]
   }
@@ -317,5 +317,5 @@
   "url": "https://github.com/JustinFreitas/osr-helper",
   "manifest": "",
   "download": "",
-  "readme": "REAMDE.md"
+  "readme": "README.md"
 }

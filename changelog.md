@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.8-gygax75.2] 2026-06-14
+### fixes
+- Fixed a crash in the `updateCombat` hook that threw for every connected client when no GM was active.
+- Fixed `OSRH.ration.eat` failing when called with an actor id (inverted actor lookup left the actor unresolved).
+- Fixed the center-hotbar version check, which used incorrect operator precedence and never engaged on the intended Foundry versions.
+- Fixed the active effects app crashing on render when a preset referenced a removed/renamed icon; it now falls back gracefully.
+- Made `getNestedValue` null-safe so a missing intermediate property no longer throws.
+- Hardened `resetMonsterAttacks` against no active combat, orphaned combatant actors, and items lacking a `counter` (non-OSE systems).
+- Fixed the ration config name field always rendering blank (`namel` typo).
+- Removed a redundant `unsetFlag`/`setFlag` write race when clearing light flags.
+
+### changed
+- Removed phantom Chinese (`cn`) compendium entries from `packFolders` that referenced unregistered packs.
+- Removed dead code: the unused `socket.mjs` stub and the legacy `osrLightTick`/`osrEffectTick` functions.
+- Removed the stale duplicate `REAMDE.md` and pointed the manifest `readme` at `README.md`.
+- Removed orphaned legacy NeDB (`.db`) pack files superseded by the LevelDB compendium directories.
+
 ## [0.4.26]
 ### changes
 - Rations are now identified by a Ration tag. This allow any item with a "Ration" tag to be used by the eat ration feature. Ration items require a quantity of at least one "1/1".

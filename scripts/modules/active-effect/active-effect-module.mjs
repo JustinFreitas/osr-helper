@@ -28,7 +28,8 @@ export function registerOsrActiveEffectModule() {
       // get effect icon data
       effectPresets.map(e=>{
         if(e.icon === 'none')e.icon = '-Icon-'
-        const icon = OSRH.data.effectIcons.find(i=>i.name === e?.icon);
+        const icon = OSRH.data.effectIcons.find(i=>i.name === e?.icon) || OSRH.data.effectIcons[0];
+        if(!icon) return;
         e.iconColor = icon.color;
         e.iconText = icon.textColor;
         e.iconPath = icon.path;

@@ -1,5 +1,4 @@
 // import { registerLight } from './modules/light.js';
-import { socket } from './modules/socket.mjs';
 import { registerLightModule } from './modules/lightModule.js';
 import { registerTurn } from './modules/turn.js';
 import { registerRations } from './modules/rations.js';
@@ -350,7 +349,7 @@ Hooks.on('deleteCombat', async () => {
 
 Hooks.on('updateCombat', async (combat, details) => {
   const singleGM = OSRH.util.singleGM();
-  if (game.user.id === singleGM.id && (await game.settings.get(`${OSRH.moduleName}`, 'combatTimeAdvance'))) {
+  if (game.user.id === singleGM?.id && (await game.settings.get(`${OSRH.moduleName}`, 'combatTimeAdvance'))) {
     let lastRound = await game.settings.get(`${OSRH.moduleName}`, 'lastRound');
     let round = details.round;
     if (round && round > lastRound) {
