@@ -428,6 +428,7 @@
   "OSRH.effect.attackBonus": "Attack Bonus",
   "OSRH.effect.rangedMod": "Ranged Mod",
   "OSRH.effect.meleeMod": "Melee Mod",
+  "OSRH.effect.rangedDmgMod": "Ranged Damage Mod",
   "OSRH.effect.save.death": "Death mod",
   "OSRH.effect.save.wand": "Wand mod",
   "OSRH.effect.save.paralysis": "Paralysis mod",

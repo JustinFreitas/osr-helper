@@ -426,6 +426,7 @@
   "OSRH.effect.attackBonus": "Bonificación de ataque",
   "OSRH.effect.rangedMod": "Mod. a distancia",
   "OSRH.effect.meleeMod": "Mod. cuerpo a cuerpo",
+  "OSRH.effect.rangedDmgMod": "Ranged Damage Mod",
   "OSRH.effect.save.death": "Mod. Muerte",
   "OSRH.effect.save.wand": "Mod. Varita",
   "OSRH.effect.save.paralysis": "Mod. Parálisis",

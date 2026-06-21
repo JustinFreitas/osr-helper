@@ -50,6 +50,10 @@ export const registerEffectData = () => {
           {
             label: game.i18n.localize('OSRH.effect.meleeMod'),
             path: 'system.thac0.mod.melee'
+          },
+          {
+            label: game.i18n.localize('OSRH.effect.rangedDmgMod'),
+            path: 'system.damage.mod.missile'
           }
         ]
       },

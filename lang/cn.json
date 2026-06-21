@@ -426,6 +426,7 @@
   "OSRH.effect.attackBonus": "攻击奖励",
   "OSRH.effect.rangedMod": "投射调整值",
   "OSRH.effect.meleeMod": "近战调整值",
+  "OSRH.effect.rangedDmgMod": "Ranged Damage Mod",
   "OSRH.effect.save.death": "死亡/灾厄调整值",
   "OSRH.effect.save.wand": "魔杖/射线调整值",
   "OSRH.effect.save.paralysis": "麻痹/定身调整值",

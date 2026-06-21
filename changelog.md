@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.8-gygax75.3] 2026-06-21
+### added
+- OSE: "Ranged Damage Mod" effect option (`system.damage.mod.missile`), exposing the gygax75 OSE missile bonus-damage lever in the effect builder. Requires ose-foundry-core-gygax75 >= 2.2.2-gygax75.11 (older systems ignore the unknown path).
+
 ## [0.7.8-gygax75.2] 2026-06-14
 ### fixes
 - Fixed a crash in the `updateCombat` hook that threw for every connected client when no GM was active.
