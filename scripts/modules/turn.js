@@ -78,9 +78,13 @@ export const registerTurn = () => {
     if (type) {
       data[type].session = 0;
       data[type].notes = '';
+    } else {
+      data.dungeon.session = 0;
+      data.travel.session = 0;
     }
     await game.settings.set(`${OSRH.moduleName}`, 'turnData', data);
     OSRH.turn.updateJournal();
+    OSRH.turn.refreshTurnTracker()
   };
 
   OSRH.turn.resetAllCounts = async function (type = null) {
@@ -146,7 +150,7 @@ export const registerTurn = () => {
         rollMod = canvas.tokens.controlled[0].actor.system.scores.cha.mod || 0;
       }
     }
-    let roll = await new Roll('2d6+@mod', { mod: rollMod }).evaluate({ async: true });
+    let roll = new Roll('2d6+@mod', { mod: rollMod }).evaluateSync();
     //  game.dice3d.showForRoll(roll)
 
     let tRoll = roll.total; //Math.floor(Math.random() * 6 + 1) +  Math.floor(Math.random() * 6 + 1) + rollMod;
@@ -172,8 +176,7 @@ export const registerTurn = () => {
         let results = table.filter((i) => i.val <= res);
         result = results[results.length - 1];
       }
-
-      return result.text;
+      return `${result.name}<br>${result.description}`
     };
     let result = getResultText(tRoll, tables[type]);
     const typeText = type.toLowerCase() == 'npc' ? 'NPC' : 'Monster';
@@ -239,7 +242,7 @@ export const registerTurn = () => {
         turnData.dungeon.procCount = -1; //resest number of turns since last random check, gygax75 fix for starting on turn zero (bug with OSR Helper)
 
         // await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData); //update settings data <--------
-        const theRoll = await new Roll('1d6').evaluate({ async: true });
+        const theRoll = await new Roll('1d6').evaluate();
         const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
 
         if (theRoll.result > turnData.dungeon.rollTarget) {
@@ -251,16 +254,11 @@ export const registerTurn = () => {
           await game?.dice3d?.showForRoll(theRoll, game.user, false, gm, false);
           ChatMessage.create(content);
         } else {
-          const roll = await encTable.roll({ async: true });
+          const roll = await encTable.roll();
           let content = ``;
           for (let res of roll.results) {
-            content += `<br/>${res.text}<br/>`;
-            // what does this do?
-            // if (!res?.documentCollection?.length) {
-            //   content += `<br/>${res.text}<br/>`;
-            // } else {
-            //   content += `<br/>@${res.documentCollection}[${res.text}]<br/>`;
-            // }
+            content += `<br/>${res.name}<br/>`
+            content += `<br/>${res.description}<br/>`;
             content += `<br>`;
           }
           if (roll.roll._evaluated) {
@@ -276,8 +274,8 @@ export const registerTurn = () => {
             await game?.dice3d?.showForRoll(theRoll, game.user, false, gm, false);
             if (turnData.dungeon.rollReact) {
               reactTable = game.tables.getName(turnData.dungeon.rTable);
-              let reactRoll = await reactTable.roll({ async: true });
-              let rollResult = `They look ${reactRoll.results[0].text}.`;
+              let reactRoll = await reactTable.roll();
+              let rollResult = `${reactRoll.results[0].name}<br>They look ${reactRoll.results[0].description}.`;
               message.content += rollResult;
               await game?.dice3d?.showForRoll(reactRoll.roll, game.user, false, gm, false);
             }
@@ -331,7 +329,7 @@ export const registerTurn = () => {
       if (travelData.proc && travelData.proc > 0) {
         const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
         for (let i = 0; i < travelData.proc; i++) {
-          const theRoll = await new Roll('1d6').evaluate({ async: true });
+          const theRoll = await new Roll('1d6').evaluate();
 
           if (theRoll.result > travelData.rollTarget) {
             const content = {
@@ -342,14 +340,14 @@ export const registerTurn = () => {
             await game?.dice3d?.showForRoll(theRoll, game.user, false, gm, false);
             ChatMessage.create(content);
           } else {
-            const roll = await encTable.roll({ async: true });
+            const roll = await encTable.roll();
             if (roll.roll._evaluated) {
               let content = ``;
               for (let res of roll.results) {
                 if (!res.documentCollection.length) {
-                  content += `<br/>${res.text}<br/>`;
+                  content += `<br>${res.name}<br/>${res.description}<br/>`;
                 } else {
-                  content += `<br/>@${res.documentCollection}[${res.text}]<br/>`;
+                  content += `<br/>@${res.documentCollection}[${res.description}]<br/>`;
                 }
                 content += `<br>`;
               }
@@ -365,8 +363,8 @@ export const registerTurn = () => {
               await game?.dice3d?.showForRoll(theRoll, game.user, false, gm, false);
               if (travelData.rollReact) {
                 reactTable = await game.tables.getName(travelData.rTable); //game.tables.find((t) => t.name === data.rTable);
-                let reactRoll = await reactTable.roll({ async: true });
-                let rollResult = `They look ${reactRoll.results[0].text}.`;
+                let reactRoll = await reactTable.roll();
+                let rollResult = `${reactRoll.results[0].name}<br>They look ${reactRoll.results[0].description}.`;
                 message.content += rollResult;
                 await game?.dice3d?.showForRoll(reactRoll.roll, game.user, false, gm, false);
               }
@@ -386,6 +384,9 @@ export const registerTurn = () => {
   };
 
   OSRH.turn.refreshTurnTracker = function () {
+
+    const app = OSRH.util.getApp('turn-tracker')
+    if(app)app.refreshCounts(true)
     Object.keys(ui.windows).map((i) => {
       let app = ui.windows[i];
       if (app.options.id === 'turn-tracker') {

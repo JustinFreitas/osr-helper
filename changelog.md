@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4-gygax75.1] 2026-06-23
+### changed
+- Merged upstream RabidOwlbear/osr-helper **v0.8.4** into the gygax75 fork. Brings in the v2 (ApplicationV2) apps — turn tracker, party sheet, travel calculator, ammo config, item config, light config, and active-effects rework — plus the new doc images and language string additions.
+- Rebased the gygax75 customizations onto the v0.8.4 base. Preserved: the Turn Tracker undo/redo + notes/turn-report features, the wandering/rest fixes, the "rest needed" red warning styling, the active-effects missing-icon crash guard, the OSE Ranged Damage Mod effect option, and the pure-helpers extraction (with tests).
+- Adopted upstream's `evaluateSync()` for the reaction roll in `turn.js`, superseding the gygax75 `evaluate({ async: true })` V14-compat change.
+- Kept fork manifest identity (JustinFreitas URLs, release-stamped manifest/download, `README.md`).
+
 ## [0.7.8-gygax75.3] 2026-06-21
 ### added
 - OSE: "Ranged Damage Mod" effect option (`system.damage.mod.missile`), exposing the gygax75 OSE missile bonus-damage lever in the effect builder. Requires ose-foundry-core-gygax75 >= 2.2.2-gygax75.11 (older systems ignore the unknown path).

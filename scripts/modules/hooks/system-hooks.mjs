@@ -1,6 +1,6 @@
 import { OSRHItemConfig } from '../item-config.mjs';
 import { injectOSRHSheetUI } from  '../ui-controls.mjs'
-
+import { injectV2Controls } from '../ui-controls.mjs';
 export async function registerSystemHooks() {
   const systemData = OSRH.systemData;
   console.log('register system hooks');
@@ -14,11 +14,15 @@ export async function registerSystemHooks() {
           addItemConfigControl(html, item);
         }
       });
-      Hooks.on('renderItemSheetV2', async (app, html, itemObj, d) => {
-          if (systemData.lightItemTypes.includes(app.document.type)) {
-            injectOSRHSheetUI(html , app, 'item')
-          }
-        });
+      // Hooks.on('renderItemSheetV2', async (app, html, itemObj, d) => {
+      //     if (systemData.lightItemTypes.includes(app.document.type)) {
+      //       injectOSRHSheetUI(html , app, 'item')
+      //     }
+      //   });
+
+      Hooks.on("getHeaderControlsApplicationV2", (app, controls) => {
+        injectV2Controls(app, controls)
+      });
       break;
       case 'ose':
         Hooks.on('renderItemSheet', async (app, html, itemObj) => {
@@ -28,11 +32,11 @@ export async function registerSystemHooks() {
             addItemConfigControl(html, item);
           }
         });
-        Hooks.on('renderItemSheetV2', async (app, html, itemObj) => {
-          if (systemData.lightItemTypes.includes(app.object.type)) {
-            injectOSRHSheetUI(html,app, 'item')
-          }
-        });
+        // Hooks.on('renderItemSheetV2', async (app, html, itemObj) => {
+        //   if (systemData.lightItemTypes.includes(app.object.type)) {
+        //     injectOSRHSheetUI(html,app, 'item')
+        //   }
+        // });
         
         break;
     default:
@@ -43,11 +47,14 @@ export async function registerSystemHooks() {
           addItemConfigControl(html, item);
         }
       });
-      Hooks.on('renderItemSheetV2', async (app, html, itemObj, d) => {
-          if (systemData.lightItemTypes.includes(app.document.type)) {
-            injectOSRHSheetUI(html , app, 'item')
-          }
-        });
+      // Hooks.on('renderItemSheetV2', async (app, html, itemObj, d) => {
+      //     if (systemData.lightItemTypes.includes(app.document.type)) {
+      //       injectOSRHSheetUI(html , app, 'item')
+      //     }
+      //   });
+      Hooks.on("getHeaderControlsApplicationV2", (app, controls) => {
+        injectV2Controls(app, controls)
+      });
   }
   // universal hooksaddItemConfigControl
   Hooks.on('renderOSRHItemConfig', async (obj, html, app) => {
@@ -64,7 +71,6 @@ async function addItemConfigControl(html, item, v2 =false) {
     const headerEl = v2 ? html.querySelector('.window-header') :html[0].querySelector('.window-header');
     const configIcon = '<i class="fa-regular fa-book-skull"></i>';
     const titleEl = headerEl?.querySelector('.window-title');
-    console.log('title el', titleEl);
     if (titleEl) {
       const configBtn = document.createElement('a');
       configBtn.classList.add('control', 'osrh-item-config');
@@ -79,7 +85,8 @@ async function addItemConfigControl(html, item, v2 =false) {
           itemData = item;
         }
         let ration = OSRH.systemData.rationItemTypes.includes(item.type);
-        new OSRHItemConfig(item, ration).render(true, { top: ev.y, left: ev.x - 125 });
+        // new OSRHItemConfig(item, ration).render(true, { top: ev.y, left: ev.x - 125 });
+        new OSRH.V2.itemConfig({item, ration}).render(true, { top: ev.y, left: ev.x - 125 });
       });
     }
   }
