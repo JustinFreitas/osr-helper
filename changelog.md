@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4-gygax75.3] 2026-06-23
+### changed
+- Removed orphaned legacy turn-tracker styles from `turn-tracker.scss` (and compiled `main.css`) that were only used by the deleted ApplicationV1 tracker: `.dark-icon`, the bare `.config-tab` rules (v2 uses `.dungeon-config-tab`/`.travel-config-tab`), `.half-row`, `h2.terrain-spacer`, and `.party-list.lg-list`. The rest of the stylesheet remains in use — it is scoped under `.app.osrh.turn-tracker`, which still matches the v2 tracker.
+
 ## [0.8.4-gygax75.2] 2026-06-23
 ### fixes
 - Restored the gygax75 Turn Tracker customizations in the new v0.8.4 **v2** (ApplicationV2) turn tracker. They were not lost in the merge — v0.8.4 switched the module to a new v2 tracker that did not carry them, while the underlying data and `OSRH.turn.*` logic remained intact. Re-added to the v2 UI:

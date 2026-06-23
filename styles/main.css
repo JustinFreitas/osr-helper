@@ -1766,9 +1766,6 @@ aside#hotbar {
 .app.osrh.turn-tracker .light-icon {
   color: #e9e6d9;
 }
-.app.osrh.turn-tracker .dark-icon {
-  color: #221e2e;
-}
 .app.osrh.turn-tracker .title {
   color: #e9e6d9;
   font-weight: 600;
@@ -1793,7 +1790,6 @@ aside#hotbar {
 }
 .app.osrh.turn-tracker .travel-tab,
 .app.osrh.turn-tracker .dungeon-tab,
-.app.osrh.turn-tracker .config-tab,
 .app.osrh.turn-tracker .tab,
 .app.osrh.turn-tracker .tab-content {
   position: relative;
@@ -1860,12 +1856,6 @@ aside#hotbar {
   margin: 1em;
   background-color: rgba(255, 255, 255, 0.5333333333);
 }
-.app.osrh.turn-tracker .config-tab {
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  z-index: 10;
-}
 .app.osrh.turn-tracker .travel-config-tab {
   height: 340px;
   display: grid;
@@ -1922,9 +1912,6 @@ aside#hotbar {
   background-color: rgba(255, 255, 255, 0.5333333333);
   border-radius: 0.3em;
 }
-.app.osrh.turn-tracker .config-tab label {
-  font-weight: 600;
-}
 .app.osrh.turn-tracker .tracker-header {
   display: flex;
   flex-direction: column;
@@ -1950,9 +1937,6 @@ aside#hotbar {
   justify-content: space-between;
   align-items: center;
   padding: 0 0.2rem;
-}
-.app.osrh.turn-tracker .half-row {
-  width: 50%;
 }
 .app.osrh.turn-tracker .num-inp {
   width: 3em;
@@ -2026,9 +2010,6 @@ aside#hotbar {
   height: 1.3em;
   background-color: rgba(255, 255, 255, 0.7333333333);
 }
-.app.osrh.turn-tracker .travel-tab h2.terrain-spacer {
-  margin-bottom: 0.8em;
-}
 .app.osrh.turn-tracker .travel-tab h2 {
   text-shadow: 0 0 4px #dbdbdb;
   margin-bottom: 0;
@@ -2097,9 +2078,6 @@ aside#hotbar {
 }
 .app.osrh.turn-tracker textarea {
   resize: none;
-}
-.app.osrh.turn-tracker .travel-tab .party-list.lg-list {
-  height: 265px;
 }
 .app.osrh.turn-tracker .actor-list {
   width: 100%;

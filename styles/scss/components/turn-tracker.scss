@@ -46,9 +46,6 @@
   .light-icon {
     color: #e9e6d9;
   }
-  .dark-icon {
-    color: #221e2e;
-  }
   .title {
     color: #e9e6d9;
     font-weight: 600;
@@ -73,7 +70,6 @@
   }
   .travel-tab,
   .dungeon-tab,
-  .config-tab,
   .tab,
   .tab-content {
     position: relative;
@@ -144,13 +140,6 @@
   /* .osrh.turn-tracker .travel-config-tab::before{
   top: 10px;
 } */
-  .config-tab {
-    display: flex;
-    flex-direction: column;
-
-    background-color: #ffffff;
-    z-index: 10;
-  }
   .travel-config-tab {
     height: 340px;
     display: grid;
@@ -209,9 +198,6 @@
     background-color: #fff8;
     border-radius: 0.3em;
   }
-  .config-tab label {
-    font-weight: 600;
-  }
   .tracker-header {
     display: flex;
     flex-direction: column;
@@ -238,9 +224,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 0.2rem;
-  }
-  .half-row {
-    width: 50%;
   }
   .num-inp {
     width: 3em;
@@ -317,9 +300,6 @@
     height: 1.3em;
     background-color: #ffffffbb;
   }
-  .travel-tab h2.terrain-spacer {
-    margin-bottom: 0.8em;
-  }
   .travel-tab h2 {
     text-shadow: 0 0 4px #dbdbdb;
     margin-bottom: 0;
@@ -385,9 +365,6 @@
     scrollbar-width: none;
     background-color: #ffffff88;
     padding: 0.2em;
-  }
-  .travel-tab .party-list.lg-list {
-    height: 265px;
   }
   .actor-list {
     width: 100%;
