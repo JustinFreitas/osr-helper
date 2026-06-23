@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4-gygax75.2] 2026-06-23
+### fixes
+- Restored the gygax75 Turn Tracker customizations in the new v0.8.4 **v2** (ApplicationV2) turn tracker. They were not lost in the merge — v0.8.4 switched the module to a new v2 tracker that did not carry them, while the underlying data and `OSRH.turn.*` logic remained intact. Re-added to the v2 UI:
+  - Dungeon/Travel **notes** textareas (persist on change; accept dropped Journal entries/pages as `@UUID` links and RollTables by name).
+  - **Undo/Redo** buttons on both tabs.
+  - The dungeon **Output Time** button (turn/notes report to chat).
+  - The **rest-needed red warning** on the "since rest" rows (turns red at rest ≥ 5).
+  - The **"Current Turn:"** counter row at the top of the dungeon tab.
+- The legacy turn tracker (`scripts/modules/turn-tracker.mjs`, `templates/turn-tracker.hbs`) is now unused; left in place for a separate cleanup pass.
+
 ## [0.8.4-gygax75.1] 2026-06-23
 ### changed
 - Merged upstream RabidOwlbear/osr-helper **v0.8.4** into the gygax75 fork. Brings in the v2 (ApplicationV2) apps — turn tracker, party sheet, travel calculator, ammo config, item config, light config, and active-effects rework — plus the new doc images and language string additions.

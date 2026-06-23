@@ -62,7 +62,11 @@
           </div>
         </div>
         {{/each}}
-        
+
+        <div class="notes-container">
+          <label for="t-notes">Notes</label>
+          <textarea name="t-notes" id="t-notes">{{turnData.travel.notes}}</textarea>
+        </div>
       </div>
     </section>
      
@@ -76,7 +80,7 @@
         </div>
       </div>
       {{/if}}
-      <div class="input-block travel-rest-count">
+      <div class="input-block travel-rest-count {{#if (gte turnData.travel.rest 5)}}warning{{/if}}">
         <div class="check-label">{{localize "OSRH.turnTracker.sinceRest"}} </div>
         <div class="check-label rest-turns">{{turnData.travel.rest}}</div>
       </div>
@@ -95,6 +99,8 @@
     <footer class="travel">
     {{#if isGM}}
       <a id="t-rest-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.rest"}} "><i class="fa-solid fa-campground"></i></a>
+      <a id="t-undo-btn" class="light-icon" title="{{localize "OSRH.ui.undo"}}"><i class="fa-solid fa-rotate-left"></i></a>
+      <a id="t-redo-btn" class="light-icon" title="{{localize "OSRH.ui.redo"}}"><i class="fa-solid fa-rotate-right"></i></a>
       <a id="save-settings"class="hidden save-settings light-icon"><i class="fa-solid fa-floppy-disk"></i></a>
       <a id="travel-turn-advance-btn" class="light-icon" title="{{localize "OSRH.turnTracker.title.advTravTurn"}} "><i class="fa-solid fa-forward"></i></a>
     {{/if}}

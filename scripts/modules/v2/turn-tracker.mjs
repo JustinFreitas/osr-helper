@@ -11,6 +11,28 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
     this.lostMod = OSRH.CONST.lostMod;
   }
 
+  // Drop handler for the notes textareas: dropping a RollTable sets the field
+  // to the table name; dropping a JournalEntry/Page appends a @UUID link.
+  async _onDrop(event) {
+    const dragData =
+      Math.floor(game.version) < 13
+        ? TextEditor.getDragEventData(event)
+        : foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    if (dragData.type === 'RollTable') {
+      if (dragData.uuid.includes('Compendium')) {
+        ui.notifications.warn(game.i18n.localize('OSRH.util.notification.compendiumTableWarn'));
+        return;
+      }
+      const table = await fromUuid(dragData.uuid);
+      event.target.value = table.name;
+    }
+    if (dragData.type === 'JournalEntry' || dragData.type === 'JournalEntryPage') {
+      const entity = await fromUuid(dragData.uuid);
+      const link = `@UUID[${dragData.uuid}]{${entity.name}}`;
+      event.target.value += link;
+    }
+  }
+
   static DEFAULT_OPTIONS = {
     id: 'turn-tracker',
     position: {
@@ -59,6 +81,7 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
     context.retainers = this.partyData(partyObj.retainers, tMod);
     context.isGM = this.isGM;
     context.turnData = this.turnData;
+    context.onTurn = this.turnData.dungeon.total + 1;
     context.tableNames = this.tableNames;
     context.DTData = this.dungeonTurnData;
     context.tabs = this._getTabs(options.parts);
@@ -93,6 +116,31 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
     const trackRationExp = html.querySelector(`#track-ration-expiration`);
     const tEncCheck = html.querySelector("#t-encounter-roll");
     const tReactCheck = html.querySelector("#t-react-roll");
+    const dNotes = html.querySelector('#d-notes');
+    const tNotes = html.querySelector('#t-notes');
+    const dTimeBtn = html.querySelector('#d-time-btn');
+
+    // Notes are editable by all users (not GM-gated), matching the legacy tracker.
+    if (dNotes) {
+      dNotes.addEventListener('change', async (e) => {
+        this.turnData.dungeon.notes = e.target.value;
+        await game.settings.set('osr-helper', 'turnData', this.turnData);
+      });
+      dNotes.addEventListener('drop', (e) => this._onDrop(e));
+    }
+    if (tNotes) {
+      tNotes.addEventListener('change', async (e) => {
+        this.turnData.travel.notes = e.target.value;
+        await game.settings.set('osr-helper', 'turnData', this.turnData);
+      });
+      tNotes.addEventListener('drop', (e) => this._onDrop(e));
+    }
+    if (dTimeBtn) {
+      dTimeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        OSRH.turn.outputTime('dungeon');
+      });
+    }
 
     if (this.isGM) {
       terrainSelect.value = this.turnData.travel.terrain;
@@ -166,6 +214,27 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
         e.preventDefault();
         await OSRH.turn.rest('travel');
         OSRH.socket.executeForEveryone('refreshTurnTracker');
+      });
+      // Undo/redo step the shared turnData stack; OSRH.turn.undo/redo refresh the tracker themselves.
+      const dUndoBtn = html.querySelector('#d-undo-btn');
+      const tUndoBtn = html.querySelector('#t-undo-btn');
+      const dRedoBtn = html.querySelector('#d-redo-btn');
+      const tRedoBtn = html.querySelector('#t-redo-btn');
+      dUndoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.undo();
+      });
+      tUndoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.undo();
+      });
+      dRedoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.redo();
+      });
+      tRedoBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await OSRH.turn.redo();
       });
       dLvlUp.addEventListener('click', (e) => {
         this.turnData.dungeon.lvl++;
