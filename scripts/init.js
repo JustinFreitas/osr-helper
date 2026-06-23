@@ -25,7 +25,7 @@ import { registerEffectData } from './data/effectData.mjs';
 import { registerPartials } from './data/registerPartials.mjs';
 import { registerOsrActiveEffectModule } from './modules/active-effect/active-effect-module.mjs';
 import { uiControls } from './modules/ui-controls.mjs';
-import { OSRHTurnTracker, registerTravelConstants } from './modules/turn-tracker.mjs';
+import { registerTravelConstants } from './modules/turn-tracker.mjs';
 import { hideForeignPacks } from './modules/hide-foreign-packs.mjs';
 import { lightConfig } from './modules/light-item-config.mjs';
 import { registerSystemData } from './data/registerSystemData.mjs';
@@ -77,7 +77,6 @@ Hooks.once('init', async function () {
   registerTravelConstants();
 
   OSRH.gameVersion = game.version ? game.version : game.version;
-  OSRH.TurnTracker = OSRHTurnTracker;
   OSRH.party = {}
   OSRH.lightConfig = lightConfig;
   OSRH.partySheet = OSRHPartySheet;

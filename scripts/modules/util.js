@@ -750,7 +750,6 @@ export const registerUtil = () => {
     btnEl.disabled = false;
   };
   OSRH.util.renderTurnTracker = function () {
-    // new OSRH.TurnTracker().render(true);
     new OSRH.V2.turnTracker().render(true)
   };
   OSRH.util.langCheck = function () {

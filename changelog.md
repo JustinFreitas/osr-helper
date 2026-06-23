@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The dungeon **Output Time** button (turn/notes report to chat).
   - The **rest-needed red warning** on the "since rest" rows (turns red at rest ≥ 5).
   - The **"Current Turn:"** counter row at the top of the dungeon tab.
-- The legacy turn tracker (`scripts/modules/turn-tracker.mjs`, `templates/turn-tracker.hbs`) is now unused; left in place for a separate cleanup pass.
+### changed
+- Removed the orphaned legacy ApplicationV1 turn tracker now that the v2 tracker is the active UI: deleted the `OSRHTurnTracker` class and `templates/turn-tracker.hbs`. `scripts/modules/turn-tracker.mjs` now contains only `registerTravelConstants`/`terrainData` (still consumed by the v2 tracker via `OSRH.CONST`).
 
 ## [0.8.4-gygax75.1] 2026-06-23
 ### changed
