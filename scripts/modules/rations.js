@@ -47,7 +47,8 @@ data: {
     </div>`;
     new foundry.applications.api.DialogV2({
       window:{title: game.i18n.localize("OSRH.ration.eatRation")},
-      classes: ['ration-dialog'],
+      classes: ['ose', 'dialog', 'ration-dialog'],
+      position: { width: 400, height: "auto" },
       content: dialogTemplate,
       buttons: [
       {

@@ -254,7 +254,7 @@ export const registerUtil = () => {
     let y = window.innerHeight / 2;
 
     // new OSRHAttack(actor).render(true, { top: y, left: x });
-    new OSRH.V2.attack({actor}).render(true, { top: y, left: x });
+    new OSRH.V2.attack({actor}).render({ force: true, position: { top: y, left: x } });
   };
 
   // used
@@ -317,16 +317,20 @@ export const registerUtil = () => {
         game.i18n.localize('OSRH.util.prefix.h'),
         game.i18n.localize('OSRH.util.prefix.i')
       ];
-      let picker = new Dialog({
-        title: 'Random Name',
+      new foundry.applications.api.DialogV2({
+        window: { title: 'Random Name' },
+        classes: ['ose', 'dialog'],
+        position: { width: 400, height: "auto" },
         content: diagTemplate,
-        buttons: {
-          pick: {
+        buttons: [
+          {
+            action: 'pick',
             label: 'Pick',
-            callback: async function (html) {
-              const nameType = html.find('#nameType')[0].value;
-              const gender = html.find('#gender')[0].value;
-              const whisper = html.find('#whisperCheck')[0].checked;
+            callback: async function (event, button, dialog) {
+              const html = dialog.element;
+              const nameType = html.querySelector('#nameType').value;
+              const gender = html.querySelector('#gender').value;
+              const whisper = html.querySelector('#whisperCheck').checked;
               let openSheets = document.querySelectorAll('.ose.sheet.actor.character');
               let focusedSheet = openSheets ? openSheets[0] : null;
               for (let sheet of openSheets) {
@@ -337,7 +341,7 @@ export const registerUtil = () => {
               const tokens = canvas.tokens.controlled;
               if (nameType == 'none' || gender == 'none') {
                 ui.notifications.warn(game.i18n.localize('OSRH.util.notification.selectOption'));
-                picker.render();
+                OSRH.util.nameGenDiag();
                 return;
               }
               if (tokens.length && tokens.length == 1) {
@@ -425,9 +429,8 @@ export const registerUtil = () => {
               ChatMessage.create(cData);
             }
           }
-        }
+        ]
       });
-      picker.render(true);
     }
     if (type) {
       let gdr = gender ? gender : 'all';
@@ -531,18 +534,22 @@ export const registerUtil = () => {
      </select>
      </div>
     `;
-    let diag = new Dialog({
-      title: game.i18n.localize('OSRH.util.dialog.curencyConverter'),
+    new foundry.applications.api.DialogV2({
+      window: { title: game.i18n.localize('OSRH.util.dialog.curencyConverter') },
+      classes: ['ose', 'dialog'],
+      position: { width: 400, height: "auto" },
       content: content,
-      buttons: {
-        convert: {
+      buttons: [
+        {
+          action: 'convert',
           label: game.i18n.localize('OSRH.util.dialog.convert'),
-          callback: (html) => {
+          callback: (event, button, dialog) => {
+            const html = dialog.element;
             // let actor = canvas.tokens.controlled[0]?.actor;
             if (!actor) ui.notifications.warn(game.i18n.localize('OSRH.util.notification.noTokenSelected'));
-            let curCur = html.find('#curCur')[0].value;
-            let newCur = html.find('#newCur')[0].value;
-            let amt = parseInt(html.find('#amt')[0].value);
+            let curCur = html.querySelector('#curCur').value;
+            let newCur = html.querySelector('#newCur').value;
+            let amt = parseInt(html.querySelector('#amt').value);
             if (curCur == 'null' || newCur == 'null') {
               ui.notifications.warn(game.i18n.localize('OSRH.util.notification.selectBothCurrency'));
               OSRH.util.curConDiag(actor, uuid, amt);
@@ -551,9 +558,8 @@ export const registerUtil = () => {
             OSRH.util.curConvert(amt, curCur, newCur, uuid);// actor,
           }
         }
-      }
+      ]
     });
-    diag.render(true);
   };
   OSRH.util.debounce = function (callback, wait) {
     let timeoutId = null;
@@ -750,7 +756,7 @@ export const registerUtil = () => {
     btnEl.disabled = false;
   };
   OSRH.util.renderTurnTracker = function () {
-    new OSRH.V2.turnTracker().render(true)
+    new OSRH.V2.turnTracker().render({ force: true })
   };
   OSRH.util.langCheck = function () {
     const curLang = game.i18n.lang;

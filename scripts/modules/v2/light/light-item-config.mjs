@@ -148,8 +148,8 @@ export class LightConfigV2 extends OSRHApp {
         const imgEl = this.html.querySelector('.item-image');
         const nameEl = this.html.querySelector('.item-name');
         const dropzone = this.html.querySelector('.dropzone');
-        new OSRH.V2.lightConfig({ item: this.item }).render(true, { top: this.position.top, left: this.position.left });
-        // new OSRH.lightConfig(this.item).render(true, { top: this.position.top, left: this.position.left });
+        new OSRH.V2.lightConfig({ item: this.item }).render({ force: true, position: { top: this.position.top, left: this.position.left } });
+        // new OSRH.lightConfig(this.item).render({ force: true, position: { top: this.position.top, left: this.position.left } });
         this.close();
       }
     }

@@ -384,6 +384,6 @@ export const registerReports = () => {
   };
   OSRH.report.travelCalc = function(){
     // new OSRH.report.TravelReport().render(true)
-    new OSRH.V2.travelCalc().render(true)
+    new OSRH.V2.travelCalc().render({ force: true })
   }
 };

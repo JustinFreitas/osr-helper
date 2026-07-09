@@ -95,7 +95,7 @@ export class OSRHPartySheetV2 extends OSRHApp{
       p.addEventListener('click', async (e) => {
         e.preventDefault();
         const actor = await fromUuid(e.target.closest('.party-actor').dataset.uuid);
-        actor.sheet.render(true);
+        actor.sheet.render({ force: true });
       });
     });
 
@@ -178,7 +178,7 @@ export class OSRHPartySheetV2 extends OSRHApp{
     OSRH.party.sheet = new OSRH.V2.partySheet({party, formation, gridSize});
   }
   static renderPartySheet(options) {
-    OSRH.party.sheet.render(true, { focus: true, ...options });
+    OSRH.party.sheet.render({ force: true, position: { focus: true, ...options } });
   }
   static async reset(size=5){
     const options = [5,7,9,11]

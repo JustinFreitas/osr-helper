@@ -86,7 +86,7 @@ async function addItemConfigControl(html, item, v2 =false) {
         }
         let ration = OSRH.systemData.rationItemTypes.includes(item.type);
         // new OSRHItemConfig(item, ration).render(true, { top: ev.y, left: ev.x - 125 });
-        new OSRH.V2.itemConfig({item, ration}).render(true, { top: ev.y, left: ev.x - 125 });
+        new OSRH.V2.itemConfig({item, ration}).render({ force: true, position: { top: ev.y, left: ev.x - 125 } });
       });
     }
   }

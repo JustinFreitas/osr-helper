@@ -251,13 +251,13 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
         e.preventDefault();
         await OSRH.turn.dungeonTurn();
         this.turnData = await game.settings.get('osr-helper', 'turnData');
-        this.render(true);
+        this.render({ force: true });
         OSRH.socket.executeForEveryone('refreshTurnTracker');
       });
       advanceTravelTurn.addEventListener('click', async (e) => {
         await OSRH.turn.travelTurn();
         this.turnData = await game.settings.get('osr-helper', 'turnData');
-        this.render(true);
+        this.render({ force: true });
         OSRH.socket.executeForEveryone('refreshTurnTracker');
       });
       resetSession.addEventListener('click', async (e) => {
@@ -274,34 +274,29 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
           await this.updateTurnData(html);
           OSRH.socket.executeForEveryone('refreshTurnTracker');
           ui.notifications.notify(game.i18n.localize('OSRH.util.notification.dungeonTurnSettingsUpdated'));
-          this.render(true)
+          this.render({ force: true })
         });
       }
       
       resetTotal.addEventListener('click', (e) => {
         let tab = this.getActiveTab(html);
-        let app = new Dialog({
-          title: game.i18n.localize('OSRH.turnTracker.warning'),
+        foundry.applications.api.DialogV2.confirm({
+          window: { title: game.i18n.localize('OSRH.turnTracker.warning') },
+          classes: ['ose', 'dialog'],
+          position: { width: 400, height: "auto" },
           content: `<p>${game.i18n.localize('OSRH.turnTracker.turnResetWarning')}</p>`,
-          buttons: {
-            one: {
-              icon: '<i class=`fas fa-check`></i>',
-              label: game.i18n.localize('OSRH.newEffectForm.Reset'),
-              callback: async () => {
-                await OSRH.turn.resetAllCounts(tab);
-                OSRH.socket.executeForEveryone('refreshTurnTracker');
-              }
-            },
-            two: {
-              icon: '<i class=`fas fa-times`></i>',
-              label: game.i18n.localize('OSRH.customEffect.close'),
-              callback: function () {
-                app.close();
-              }
+          yes: {
+            label: game.i18n.localize('OSRH.newEffectForm.Reset'),
+            callback: async () => {
+              await OSRH.turn.resetAllCounts(tab);
+              OSRH.socket.executeForEveryone('refreshTurnTracker');
             }
           },
-          default: 'two'
-        }).render(true);
+          no: {
+            label: game.i18n.localize('OSRH.customEffect.close')
+          },
+          rejectClose: false
+        });
       });
 
       forageCheck.addEventListener('click', (e) => {
@@ -413,7 +408,7 @@ _forceTabInit(tabData) {
   async refreshCounts(refresh = false) {
     this.turnData = foundry.utils.deepClone(await game.settings.get('osr-helper', 'turnData'));
     // this.dungeonTurnData = await game.settings.get('osr-helper', 'dungeonTurnData');
-    if (refresh) this.render(true);
+    if (refresh) this.render({ force: true });
   }
   getEncounterTables(html) {
     let selectEls = [...html.querySelectorAll('.d-enc-select')];

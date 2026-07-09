@@ -53,13 +53,13 @@ export class OSRHItemConfigV2 extends OSRHApp{
     lightConfigBtn.addEventListener('click', async (ev)=>{
       ev.preventDefault();
       //await OSRH.util.getItem(this.item)
-      new OSRH.V2.lightConfig({item}).render(true, {top:this.position.top, left:this.position.left})
+      new OSRH.V2.lightConfig({item}).render({ force: true, position: {top:this.position.top, left:this.position.left} })
       this.close()
     })
     rationConfigBtn.addEventListener('click', async (ev)=>{
       ev.preventDefault();
       // let item = await OSRH.util.getItem(this.item);
-      new OSRH.V2.rationConfig({item}).render(true, {top:this.position.top, left:this.position.left})
+      new OSRH.V2.rationConfig({item}).render({ force: true, position: {top:this.position.top, left:this.position.left} })
       this.close()
     })
     if(ammoConfigBtn){
@@ -70,7 +70,7 @@ export class OSRHItemConfigV2 extends OSRHApp{
           left:this.position.left
         }
         let item = await OSRH.util.getItem(this.item);
-        new OSRH.V2.ammoConfig({item}).render(true, appOptions);
+        new OSRH.V2.ammoConfig({item}).render({ force: true, position: appOptions });
         this.close()
       })
     }

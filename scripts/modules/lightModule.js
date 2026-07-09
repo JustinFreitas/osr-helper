@@ -68,7 +68,8 @@ export const registerLightModule = async function () {
 
     new foundry.applications.api.DialogV2({
       window:{title: 'Light on'},
-      classes: ['light-dialog'],
+      classes: ['ose', 'dialog', 'light-dialog'],
+      position: { width: 400, height: "auto" },
       content: dialogTemplate,
       buttons: [
         {

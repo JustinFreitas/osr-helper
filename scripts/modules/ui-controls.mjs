@@ -204,7 +204,7 @@ export function injectV2Controls(app, controls) {
         icon: 'fas fa-book-skull',
         label: 'OSRH Config',
         onClick: () => {
-          new OSRHItemConfigV2({item :app.document, ration}).render(true, { top: app.position.top, left: app.position.left - 125 });
+          new OSRHItemConfigV2({item :app.document, ration}).render({ force: true, position: { top: app.position.top, left: app.position.left - 125 } });
         }
       }
     )

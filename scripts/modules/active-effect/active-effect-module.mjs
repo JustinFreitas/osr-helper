@@ -464,7 +464,7 @@ export function registerOsrActiveEffectModule() {
       open.render();
     } else {
       // new OSRH.effect.app(actor, displayAll).render(true);
-      new OSRH.V2.effectsApp({actor, displayAll}).render(true)
+      new OSRH.V2.effectsApp({actor, displayAll}).render({ force: true })
     }
   };
 
