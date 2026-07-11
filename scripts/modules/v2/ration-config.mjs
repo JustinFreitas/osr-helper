@@ -34,7 +34,7 @@ export class RationConfigV2 extends OSRHApp {
     context = foundry.utils.mergeObject(context, {});
     let rationData = this.rationData;
     let trackExp = typeof rationData !== 'undefined' ? this.rationData?.trackExpiration : true;
-    context.name = this.rationData?.namel;
+    context.name = this.rationData?.name;
     context.trackExpiration = trackExp;
     context.rationDuration = this.rationData?.duration?.value || 7;
     context.durationType = this.rationData?.duration?.type || 'day';

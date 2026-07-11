@@ -138,8 +138,6 @@ export class OSRHPartySheetV2 extends OSRHApp{
      
       switch (part) {
         case 'nav':
-          break;
-        case 'nav':
           tab.id = 'nav';
           tab.label += 'nav';
           break;
@@ -188,8 +186,8 @@ export class OSRHPartySheetV2 extends OSRHApp{
     }else{if (Number.isInteger(size) && options.includes(size)){
       const party = OSRH.util.getPartyActors().party;
     const formation = await OSRHPartySheetV2.defaultFormationData(size, true);
-    await game.settings.set('osr-helper', 'currentFormation', {active: false, data: formation, gridSize: size});
-    OSRH.party.sheet = new OSRHPartySheet(party, formation, size);
+     await game.settings.set('osr-helper', 'currentFormation', {active: false, data: formation, gridSize: size});
+     OSRH.party.sheet = new OSRHPartySheetV2({ party, formation, gridSize: size });
     }else{
       ui.notifications.warn(game.i18n.localize("OSRH.notification.gridSizeWarn"))
     }}

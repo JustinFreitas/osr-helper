@@ -141,7 +141,8 @@ export class LightConfigV2 extends OSRHApp {
       const item = await fromUuid(data.uuid);
       if (!item || !itemTypes.includes(item.type)) {
         const types = itemTypes.join(', ');
-        ui.notifications.warn(`Invalid Item Type. Valid Item Types Include ${types}`).return;
+        ui.notifications.warn(`Invalid Item Type. Valid Item Types Include ${types}`);
+        return;
       } else {
         this.item = item;
         const pCont = this.html.querySelector('#portrait-cont');

@@ -42,9 +42,7 @@ export class AmmoConfigV2 extends OSRHApp{
     // const nameInpCont = html.find('.name-inputs')[0];
     const nameRows = [...html.querySelectorAll('.name-row')]
     //name row delete listener
-    nameRows.map(i=>{
-      let nameRow = nameRows[i]
-      
+    nameRows.forEach(nameRow => {
       let btn = nameRow.querySelector('.name-del');
       btn?.addEventListener('click', ev=>{
         ev.preventDefault();
@@ -52,7 +50,7 @@ export class AmmoConfigV2 extends OSRHApp{
       })
     })
 
-    nameInputs.map(inp=>{
+    nameInputs.forEach(inp=>{
 
       let input = inp;
       input.addEventListener('blur', ev=>{

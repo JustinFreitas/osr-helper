@@ -347,9 +347,9 @@ export const registerLightModule = async function () {
   OSRH.light.updateTokens = async function (uuid, lightData, lastTurn = false) {
 
     let actor = await fromUuid(uuid);
-    game.scenes.map((s) => {
+    for (let s of game.scenes) {
       if (s.tokens.size) {
-        s.tokens.forEach(async (t) => {
+        for (let t of s.tokens) {
           if (t.actor && t.actor.uuid == uuid) {
             let data = {
               light: {
@@ -375,9 +375,9 @@ export const registerLightModule = async function () {
 
             await t.update(data);
           }
-        });
+        }
       }
-    });
+    }
   };
 
   OSRH.light.turnsRemaining =  async function (actorId) {

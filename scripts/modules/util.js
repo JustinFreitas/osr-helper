@@ -144,7 +144,7 @@ export const registerUtil = () => {
     //loop through active game scenes
     for (let scene of game.scenes.contents) {
       //loop through tokens contaioned in scene
-      scene.tokens.contents.forEach(async (t) => {
+      for (let t of scene.tokens.contents) {
         //if token actorId == actorId set light settings to off
 
         if (t?.actor?.id == actorId) {
@@ -180,7 +180,7 @@ export const registerUtil = () => {
           //end version check
           await t.update(data);
         }
-      });
+      }
     }
   };
   // used
@@ -369,7 +369,7 @@ export const registerUtil = () => {
                 return;
               }
               if (tokens.length > 1) {
-                tokens.forEach(async (t) => {
+                for (let t of tokens) {
                   let token = t;
                   let actor = t.actor;
                   let newName = await getName(nameType, gender);
@@ -401,7 +401,7 @@ export const registerUtil = () => {
                   });
                   await token.document.update({ name: newName });
                   ui.notifications.info(game.i18n.localize('OSRH.util.notification.tokenActorNameUpdated'));
-                });
+                }
                 return;
               }
               if (!canvas.tokens.controlled.length && focusedSheet) {
@@ -844,11 +844,10 @@ export const intializePackFolders = async () => {
     let folder = game.folders.getName(folderName);
     if (!folder && movePacks) {
       folder = await Folder.create([{ name: folderName, type: 'Compendium', color: '#30741d' }]);
-      packnames.forEach(async (pn) => {
+      await Promise.all(packnames.map(async (pn) => {
         const pack = await game.packs.get(`osr-helper.${pn}`);
         if (pack) await pack.setFolder(folder[0]);
-      });
-      await sleep(150);
+      }));
       ui.sidebar.render();
     }
   }

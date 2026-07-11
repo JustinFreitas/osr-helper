@@ -417,8 +417,8 @@ _forceTabInit(tabData) {
   async updateTurnData(html) {
     const dEncRoll = html.querySelector('#d-encounter-roll');
     const dReactRoll = html.querySelector('#d-react-roll');
-    const tEncRoll = html.querySelector('#d-encounter-roll');
-    const tReactRoll = html.querySelector('#d-react-roll');
+    const tEncRoll = html.querySelector('#t-encounter-roll');
+    const tReactRoll = html.querySelector('#t-react-roll');
     const tEncTable = html.querySelector('#travel-enc-table');
     const tReactTable = html.querySelector('#travel-react-table');
     const dReactTable = html.querySelector('#d-react-table');

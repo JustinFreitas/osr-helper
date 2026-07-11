@@ -201,14 +201,16 @@ export const registerEffectModule = async function () {
 
   OSRH.effect.effectListGetData = async function (data, type) {
     let retArr = [];
-    if (data.length) {
-      data.forEach(async (e) => {
+      for (const e of data) {
         let tActor = await fromUuid(e.target);
+        if (!tActor) continue;
         let eCreator = e.createdBy.includes('.') ? await fromUuid(e.createdBy) : await game.actors.get(e.createdBy);
         if (eCreator) {
           let isInf = e.isInf;
           tActor = tActor.collectionName == 'tokens' ? (tActor = tActor.actor) : tActor;
+          if (!tActor) continue;
           let effect = await tActor.getEmbeddedDocument('ActiveEffect', e.effectId);
+          if (!effect) continue;
           let durObj = effect.duration;
           let entryData = {};
           entryData.name = effect.name;
@@ -232,8 +234,7 @@ export const registerEffectModule = async function () {
 
           retArr.push(entryData);
         }
-      });
-    }
+      }
     return retArr;
   };
   // rewrite

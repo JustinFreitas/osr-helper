@@ -33,7 +33,7 @@ export class ItemSettingsFormV2 extends OSRHApp {
     let flag = this.item.getFlag(`${OSRH.moduleName}`, 'lightItemData')
     let context = await super._prepareContext(options);
     context = foundry.utils.mergeObject(context, {
-      name: this.item.name ? this.item.name : ItemName,
+      name: this.item.name ? this.item.name : '',
       dim: flag?.dim ? flag.dim : 30,
       bright: flag?.bright ? flag.bright : 10,
       color: flag?.color ? flag.color : '#ff7b24',
@@ -72,7 +72,7 @@ export class ItemSettingsFormV2 extends OSRHApp {
       });
       // update button
       updateBtn.addEventListener('click', async (ev) => {
-        let inputs = html.find('.light-config-input');
+        let inputs = [...html.querySelectorAll('.light-config-input')];
         let formData = {};
         for (let i of inputs) {
           if (i.id === 'duration' && i.value === 'inf') {

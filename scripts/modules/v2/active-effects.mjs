@@ -252,13 +252,15 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
   async effectListGetData(data, type) {
     let retArr = [];
     if (data.length) {
-      await data.forEach(async (e) => {
+      for (const e of data) {
         let tActor = await fromUuid(e.target);
+        if (!tActor) continue;
         // tActor = tActor.collectionName == 'tokens' ? (tActor = tActor.actor) : tActor;
         let eCreator = e.createdBy?.includes('.') ? await fromUuid(e.createdBy) : await game.actors.get(e.createdBy);
         if (eCreator) {
           let isInf = e.isInf;
           let effect = await tActor.getEmbeddedDocument('ActiveEffect', e.effectId);
+          if (!effect) continue;
           let interval = effect.flags['data'].interval;
           let duration = isInf ? 'inf' : interval == 'hours' ? Math.round(effect.duration.remaining / 3600) : interval == 'minutes' ? Math.round(effect.duration.remaining / 60) : effect.duration.remaining;
           // let durObj = effect.duration;
@@ -282,7 +284,7 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
           }
           retArr.push(entryData);
         }
-      });
+      }
     }
     return retArr;
   }

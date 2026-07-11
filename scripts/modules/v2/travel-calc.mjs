@@ -100,7 +100,7 @@ export class TravelCalculatorV2 extends OSRHApp {
     for (let input of radioInputs) {
       input.addEventListener('input', (ev) => {
         // const html = document.querySelector('[type="radio][checked]');
-        const mod = this.terrainMod[ev.srcElement.value];
+        const mod = this.terrainMod[ev.target.value];
         // const modRate = Math.floor(this.data.baseRate * this.terrainMod[ev.srcElement.value]);
         this.updatePartyDist(mod);
       });
@@ -201,6 +201,19 @@ export class TravelCalculatorV2 extends OSRHApp {
   }
   async getTravelData(mod) {
     const partyObj = OSRH.util.getPartyActors();
+    if (!partyObj.party.length) {
+      return {
+        baseRate: 0,
+        data: {
+          characters: [],
+          retainers: []
+        },
+        html: {
+          characters: "",
+          retainers: ""
+        }
+      };
+    }
     let slowest = parseInt(OSRH.util.getNestedValue(partyObj.party[0], this.systemData.paths.encMov));
     partyObj.party.forEach((a) => {
       let rate = OSRH.util.getNestedValue(a, this.systemData.paths.encMov);

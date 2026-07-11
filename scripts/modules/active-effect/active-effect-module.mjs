@@ -190,39 +190,39 @@ export function registerOsrActiveEffectModule() {
     }
     async effectListGetData(data, type) {
       let retArr = [];
-      if (data.length) {
-        data.forEach(async (e) => {
-          let tActor = await fromUuid(e.target);
-          // tActor = tActor.collectionName == 'tokens' ? (tActor = tActor.actor) : tActor;
-          let eCreator = e.createdBy?.includes('.') ? await fromUuid(e.createdBy) : await game.actors.get(e.createdBy);
-          if (eCreator) {
-            let isInf = e.isInf;
-            let effect = await tActor.getEmbeddedDocument('ActiveEffect', e.effectId);
-            let interval = effect.flags['data'].interval;
-            let duration = isInf ? 'inf' : interval == 'hours' ? Math.round(effect.duration.remaining / 3600) : interval == 'minutes' ? Math.round(effect.duration.remaining / 60) : effect.duration.remaining;
-            // let durObj = effect.duration;
-            let entryData = {
-              name: effect.name,
-              creator: eCreator.name,
-              effectId: e.effectId,
-              target: tActor.name,
-              durType: isInf ? '' : interval == 'minutes' ? 'min.' : interval == 'hours' ? 'hr.' : 'sec.',
-              isInf: isInf,
-              duration: duration, //isInf ? 'inf' :  effect.flags['data'].interval == 'minutes' ? effect.duration.remaining / 60 :  effect.duration.remaining,
-              descrip: effect.flags['data'].details,
-              list: ``,
-              targetImg: tActor.img,
-              delBtn: type == 'self' ? true : game.user.isGM ? true : false
-            };
-            for (let change of effect.flags.data.effects) {
-              let displayStr = `${change.name}: ${change.value}`;
-              let listItem = `<li title="${displayStr}">${displayStr}</li>`;
-              entryData.list += listItem;
-            }
-
-            retArr.push(entryData);
+      for (const e of data) {
+        let tActor = await fromUuid(e.target);
+        if (!tActor) continue;
+        // tActor = tActor.collectionName == 'tokens' ? (tActor = tActor.actor) : tActor;
+        let eCreator = e.createdBy?.includes('.') ? await fromUuid(e.createdBy) : await game.actors.get(e.createdBy);
+        if (eCreator) {
+          let isInf = e.isInf;
+          let effect = await tActor.getEmbeddedDocument('ActiveEffect', e.effectId);
+          if (!effect) continue;
+          let interval = effect.flags['data'].interval;
+          let duration = isInf ? 'inf' : interval == 'hours' ? Math.round(effect.duration.remaining / 3600) : interval == 'minutes' ? Math.round(effect.duration.remaining / 60) : effect.duration.remaining;
+          // let durObj = effect.duration;
+          let entryData = {
+            name: effect.name,
+            creator: eCreator.name,
+            effectId: e.effectId,
+            target: tActor.name,
+            durType: isInf ? '' : interval == 'minutes' ? 'min.' : interval == 'hours' ? 'hr.' : 'sec.',
+            isInf: isInf,
+            duration: duration, //isInf ? 'inf' :  effect.flags['data'].interval == 'minutes' ? effect.duration.remaining / 60 :  effect.duration.remaining,
+            descrip: effect.flags['data'].details,
+            list: ``,
+            targetImg: tActor.img,
+            delBtn: type == 'self' ? true : game.user.isGM ? true : false
+          };
+          for (let change of effect.flags.data.effects) {
+            let displayStr = `${change.name}: ${change.value}`;
+            let listItem = `<li title="${displayStr}">${displayStr}</li>`;
+            entryData.list += listItem;
           }
-        });
+
+          retArr.push(entryData);
+        }
       }
       return retArr;
     }
