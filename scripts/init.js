@@ -34,7 +34,7 @@ import { OSRHPartySheet } from './modules/party-sheet/party-sheet.mjs';
 import { AmmoItemConfig } from './modules/ammo-config.mjs';
 import { tagMigration } from './modules/migration/tagMigration.mjs';
 import { migrateAmmoFlag } from './modules/migration/ammoFlag.mjs';
-import { migrateSavedEffects } from './modules/migration/savedEffecst.mjs';
+import { migrateSavedEffects } from './modules/migration/savedEffects.mjs';
 import { CustomAttributeEdit } from './modules/custom-attrib/custom-attrib-edit.mjs';
 import { ManageCustomAttributes } from './modules/custom-attrib/manage-attributes.mjs';
 import { injectOSRHSheetUI } from  './modules/ui-controls.mjs';
@@ -268,7 +268,11 @@ Hooks.on('renderActorSheet', async (sheetEl, html, actorObj, c) => {
     }
 
     //sheet side ui
-    const sheetUiEl = addSheetUi(html[0].closest('.app'));
+    const htmlEl = html instanceof HTMLElement ? html : html[0];
+    const rootApp = htmlEl?.closest('.app');
+    if (!rootApp) return;
+
+    const sheetUiEl = addSheetUi(rootApp);
     if (sheetUiEl !== 'skip') {
       if (actorObj?.owner || actorObj?.isOwner) {
         const uiTab = document.createElement('div');
@@ -311,7 +315,7 @@ Hooks.on('renderActorSheet', async (sheetEl, html, actorObj, c) => {
           // custom attrib btn
           btnCont.appendChild(ccBtn);
           if ((await game.settings.get(OSRH.moduleName, `displaycustomAttrib`)) && actorObj.prototypeToken.actorLink) {
-            addcustomAttribElement(html[0].closest('.app'), actorObj);
+            addcustomAttribElement(rootApp, actorObj);
             if (await game.settings.get(OSRH.moduleName, 'trackCustomAttrib')) {
               addAttribListeners(html, actorObj);
             }

@@ -25,7 +25,7 @@ export class OSRHApp extends HandlebarsApplicationMixin(ApplicationV2) {
   };
   static PARTS = {
     main: {
-      template: 'modules/osr-helper-v2/templates/'
+      template: 'modules/osr-helper/templates/'
     }
   };
   async _prepareContext(options) {

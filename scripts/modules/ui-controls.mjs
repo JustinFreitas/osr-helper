@@ -154,7 +154,7 @@ export async function injectOSRHSheetUI(html, object, type) {
           break;
         case 'item-management':
           let ration = OSRH.systemData.rationItemTypes.includes(object.document.type);
-          new OSRHItemConfig(object.document, ration).render(true, { top: ev.y, left: ev.x - 125 });
+          new OSRHItemConfigV2({ item: object.document, ration }).render({ force: true, position: { top: ev.y, left: ev.x - 125 } });
           break;
         case 'item-report':
           OSRH.report.actorItem(object.document);

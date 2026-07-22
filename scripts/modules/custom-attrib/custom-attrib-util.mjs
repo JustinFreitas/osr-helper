@@ -39,10 +39,10 @@ export async function addcustomAttribElement(sheetEl, actor) {
             const attributes = await foundry.utils.deepClone(actor.flags[OSRH.moduleName]?.customAttributes);
             const attrib = attributes.find((i) => i.id == id);
             if (attrib) attrib.value = parseInt(inp.value);
-            const actorObj = await game.actors.get(actor._id);
+            const actorObj = game.actors.get(actor.id);
             await actorObj.setFlag(`${OSRH.moduleName}`, 'customAttributes', attributes);
 
-            const actorSheet = Object.values(ui.windows).find((i) => i.id.includes(actor._id));
+            const actorSheet = Object.values(ui.windows).find((i) => i.id?.includes(actor.id));
             if (actorSheet) {
               const pos = { top: actorSheet.position.top, left: actorSheet.position.left };
               await actorSheet.close();
