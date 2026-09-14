@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       # No dependencies are required (tests use Node's built-in runner),
       # but install gracefully if a lockfile is ever added.
