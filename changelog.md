@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4-gygax75.8] 2026-09-26
+### fixes
+- **Turn Tracker Layout Restoration:** Reverted ApplicationV2 window height changes (`position: { height: 480 }`) and removed `min-height: 480px;` from `turn-tracker.scss`/`main.css`. Restored explicit window heights across `OSRHTurnTrackerV2` (480), `OSRHPartySheetV2` (400), `OSRHItemConfigV2` (200), and `OSRHApp` (400), eliminating empty viewport gaps above and below the docked tracker footer.
+
 ## [0.8.4-gygax75.7] 2026-09-26
 ### fixes
 - **ApplicationV2 Sheet DOM Crash:** Normalized `html` parameter across `addItemConfigControl` and `renderOSRHItemConfig` hooks in `system-hooks.mjs` using `html instanceof HTMLElement ? html : html[0]`, preventing fatal `TypeError` on Foundry V14 ApplicationV2 item sheets.

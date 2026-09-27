@@ -37,7 +37,7 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
     id: 'turn-tracker',
     position: {
       width: 300,
-      height: "auto"
+      height: 480
     },
     classes: ['app', 'osrh','v2', 'turn-tracker'],
     tag: 'osrh-app',

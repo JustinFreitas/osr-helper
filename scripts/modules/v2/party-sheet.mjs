@@ -16,7 +16,7 @@ export class OSRHPartySheetV2 extends OSRHApp{
     id: 'OSRH-party-sheet',
     position: {
       width: 300,
-      height: "auto"
+      height: 400
     },
     classes: ['osrh', 'application', 'party-sheet', 'v2'],
     tag: 'osrh-app', // The default is "div"
