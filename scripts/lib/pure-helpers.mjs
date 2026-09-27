@@ -45,3 +45,33 @@ export const convertTime = (duration, type, disp = false) => {
 export const hasPermission = (actor, uId, pLvl) => {
   return actor.ownership?.[uId] >= pLvl ? true : false;
 };
+
+// Safely parse an item quantity, handling integers, numeric strings, and fractional strings like "1/1".
+export const parseQuantity = (rawQty) => {
+  if (rawQty === undefined || rawQty === null) return 0;
+  if (typeof rawQty === 'number') return isNaN(rawQty) ? 0 : rawQty;
+  const str = String(rawQty).trim();
+  const num = parseInt(str.split('/')[0], 10);
+  return isNaN(num) ? 0 : num;
+};
+
+// Check if an item represents a ration via osr-helper flag or OSE system tag.
+export const isRationItem = (item, tagsEnabled = true) => {
+  if (!item) return false;
+  if (item.flags?.['osr-helper']?.itemType === 'ration') return true;
+  if (tagsEnabled && Array.isArray(item.system?.tags)) {
+    return item.system.tags.some((t) =>
+      typeof t === 'string' ? t.toLowerCase() === 'ration' : t?.title?.toLowerCase() === 'ration'
+    );
+  }
+  return false;
+};
+
+// Evaluate dungeon rest warning state based on turns since last rest:
+// B/X requires 1 turn of rest every hour (rest on the 6th turn).
+export const getRestWarningState = (turnsSinceRest) => {
+  if (turnsSinceRest >= 6) return 'penalty';
+  if (turnsSinceRest > 4) return 'warning';
+  return 'none';
+};
+

@@ -78,7 +78,8 @@ jobs:
             -x 'package-lock.json' \
             -x 'node_modules/*' \
             -x '*.zip' \
-            -x 'css-compile.sh'
+            -x 'css-compile.sh' \
+            -x 'styles/scss/*'
           echo "--- zip contents ---"
           unzip -l module.zip
 

@@ -4,7 +4,10 @@ import {
   convertToSeconds,
   convertFromSeconds,
   convertTime,
-  hasPermission
+  hasPermission,
+  parseQuantity,
+  isRationItem,
+  getRestWarningState
 } from '../lib/pure-helpers.mjs';
 export const registerUtil = () => {
   OSRH.util.sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -784,15 +787,20 @@ export const registerUtil = () => {
     return itemData;
   };
   OSRH.util.getOSRHItems = function (actor, type) {
-    let tags = false; //OSRH.systemData.tags;
-    // if(tags){
-    //   return actor.items.filter(i=>{
-    //   let itemTags = [];
-    //   i.system.tags.map(t=>itemTags.push(t.value.toLowerCase()))
-    //   return itemTags.includes(type, actor);
-    //   })
-    // }
-    return actor.items.filter((i) => i.flags?.['osr-helper']?.itemType === type);
+    const tags = OSRH.systemData?.tags;
+    if (type === 'ration') {
+      return actor.items.filter((i) => isRationItem(i, tags));
+    }
+    const targetType = type.toLowerCase();
+    return actor.items.filter((i) => {
+      if (i.flags?.['osr-helper']?.itemType === type) return true;
+      if (tags && Array.isArray(i.system?.tags)) {
+        return i.system.tags.some((t) =>
+          typeof t === 'string' ? t.toLowerCase() === targetType : t?.title?.toLowerCase() === targetType
+        );
+      }
+      return false;
+    });
   };
   OSRH.util.renderPartySheet = function () {
     // new OSRH.partySheet().render(true);
@@ -802,6 +810,9 @@ export const registerUtil = () => {
   OSRH.util.convertFromSeconds = convertFromSeconds;
   OSRH.util.convertTime = convertTime;
   OSRH.util.hasPermission = hasPermission;
+  OSRH.util.parseQuantity = parseQuantity;
+  OSRH.util.isRationItem = isRationItem;
+  OSRH.util.getRestWarningState = getRestWarningState;
   OSRH.util.dragDropHandler = function (d) {
     if (game.version >= 13) {
       return new foundry.applications.ux.DragDrop.implementation(d);

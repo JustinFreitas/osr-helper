@@ -60,15 +60,17 @@ export async function registerSystemHooks() {
   Hooks.on('renderOSRHItemConfig', async (obj, html, app) => {
     let itemType = obj.itemType;
     if (!itemType) itemType = 'none';
-    const select = html[0].querySelector('#item-type');
-    select.value = itemType;
+    const htmlEl = html instanceof HTMLElement ? html : html[0];
+    const select = htmlEl?.querySelector('#item-type');
+    if (select) select.value = itemType;
   });
 }
 
-async function addItemConfigControl(html, item, v2 =false) {
+async function addItemConfigControl(html, item, v2 = false) {
   const addControl = await game.settings.get('osr-helper', 'enableItemConfig');
   if (addControl) {
-    const headerEl = v2 ? html.querySelector('.window-header') :html[0].querySelector('.window-header');
+    const htmlEl = html instanceof HTMLElement ? html : html[0];
+    const headerEl = htmlEl?.querySelector('.window-header');
     const configIcon = '<i class="fa-regular fa-book-skull"></i>';
     const titleEl = headerEl?.querySelector('.window-title');
     if (titleEl) {

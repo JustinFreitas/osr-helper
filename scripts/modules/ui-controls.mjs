@@ -1,7 +1,6 @@
 import { renderTemplateHandler } from './util.js';
 import { OSRHItemConfig } from './item-config.mjs';
 import { OSRHItemConfigV2 } from './v2/item-config.mjs';
-import { NewActiveEffectForm } from './old/effectModule.js';
 export const uiControls = {
   async addUiControls() {
     const setting = await game.settings.get(OSRH.moduleName, 'displayControlUi');

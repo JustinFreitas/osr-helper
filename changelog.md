@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4-gygax75.7] 2026-09-26
+### fixes
+- **ApplicationV2 Sheet DOM Crash:** Normalized `html` parameter across `addItemConfigControl` and `renderOSRHItemConfig` hooks in `system-hooks.mjs` using `html instanceof HTMLElement ? html : html[0]`, preventing fatal `TypeError` on Foundry V14 ApplicationV2 item sheets.
+- **Symmetrical OSE Ration Tagging:** Re-enabled OSE system tag detection (`Ration`) across both single-actor ration eating (`rations.js`) and party-wide consumption (`util.js:getOSRHItems`), resolving an upstream bug where items without `osr-helper` flags were ignored.
+- **Fractional Quantity Sanitization:** Sanitized quantity arithmetic in `rations.js` via `parseQuantity` to safely handle numeric strings and fractional notation (e.g. `"1/1"`) without evaluating to `NaN`.
+- **ApplicationV2 Window Sizing:** Conformed ApplicationV2 windows (`osr-app.mjs`, `party-sheet.mjs`, `item-config.mjs`, `turn-tracker.mjs`) to Foundry V14 `position: { height: "auto" }`, and added `min-height: 480px;` to `turn-tracker.scss`/`main.css` to prevent flex container collapse.
+
+### changed
+- Purged unreferenced legacy code: deleted `scripts/modules/old/` (`customEffectList.js`, `effectModule.js`), `scripts/modules/migration/turnDataMigration.mjs`, and orphaned macro packs (`packs/macros-hyperborea`, `packs/macros-wwn`).
+- Added `-x 'styles/scss/*'` to `.github/workflows/release.yml` zip packaging to eliminate uncompiled Sass sources from release archives.
+- Expanded unit test suite with 4 new tests in `test/pure-helpers.test.mjs` covering ration detection, quantity parsing, and B/X dungeon rest alert thresholds (20/20 passing).
+
 ## [0.8.4-gygax75.3] 2026-06-23
 ### changed
 - Removed orphaned legacy turn-tracker styles from `turn-tracker.scss` (and compiled `main.css`) that were only used by the deleted ApplicationV1 tracker: `.dark-icon`, the bare `.config-tab` rules (v2 uses `.dungeon-config-tab`/`.travel-config-tab`), `.half-row`, `h2.terrain-spacer`, and `.party-list.lg-list`. The rest of the stylesheet remains in use — it is scoped under `.app.osrh.turn-tracker`, which still matches the v2 tracker.

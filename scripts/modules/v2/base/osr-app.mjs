@@ -11,7 +11,7 @@ export class OSRHApp extends HandlebarsApplicationMixin(ApplicationV2) {
     id: 'osrh-app',
     position: {
       width: 300,
-      height: 400
+      height: "auto"
     },
     classes: [],
     tag: 'osrh-app', // The default is "div"

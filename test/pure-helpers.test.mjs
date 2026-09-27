@@ -6,6 +6,9 @@ import {
   convertFromSeconds,
   convertTime,
   hasPermission,
+  parseQuantity,
+  isRationItem,
+  getRestWarningState,
   TIME_INC
 } from '../scripts/lib/pure-helpers.mjs';
 
@@ -88,3 +91,71 @@ test('hasPermission: false when below threshold or unknown user', () => {
 test('hasPermission: no ownership object does not throw', () => {
   assert.equal(hasPermission({}, 'user1', 1), false);
 });
+
+test('parseQuantity: handles numbers, strings, and fractional representations', () => {
+  assert.equal(parseQuantity(5), 5);
+  assert.equal(parseQuantity(0), 0);
+  assert.equal(parseQuantity(NaN), 0);
+  assert.equal(parseQuantity('3'), 3);
+  assert.equal(parseQuantity(' 4 '), 4);
+  assert.equal(parseQuantity('1/1'), 1);
+  assert.equal(parseQuantity('2/3'), 2);
+  assert.equal(parseQuantity('10/10'), 10);
+  assert.equal(parseQuantity(null), 0);
+  assert.equal(parseQuantity(undefined), 0);
+  assert.equal(parseQuantity(''), 0);
+  assert.equal(parseQuantity('invalid'), 0);
+});
+
+test('isRationItem: detects rations via flags and OSE tags', () => {
+  // Flag detection
+  const flagged = { flags: { 'osr-helper': { itemType: 'ration' } } };
+  assert.equal(isRationItem(flagged, false), true);
+  assert.equal(isRationItem(flagged, true), true);
+
+  // OSE tag object detection (case-insensitive)
+  const taggedObject = { system: { tags: [{ title: 'Ration' }] } };
+  assert.equal(isRationItem(taggedObject, true), true);
+  assert.equal(isRationItem(taggedObject, false), false);
+
+  const taggedLower = { system: { tags: [{ title: 'ration' }] } };
+  assert.equal(isRationItem(taggedLower, true), true);
+
+  // OSE string tag detection
+  const taggedString = { system: { tags: ['Ration'] } };
+  assert.equal(isRationItem(taggedString, true), true);
+
+  // Non-ration items
+  const nonRation = { system: { tags: [{ title: 'Torch' }] } };
+  assert.equal(isRationItem(nonRation, true), false);
+
+  const emptyItem = { system: {} };
+  assert.equal(isRationItem(emptyItem, true), false);
+  assert.equal(isRationItem(null, true), false);
+  assert.equal(isRationItem(undefined, true), false);
+});
+
+test('getRestWarningState: enforces B/X dungeon rest alert thresholds', () => {
+  // Turns 0 to 4: safe
+  assert.equal(getRestWarningState(0), 'none');
+  assert.equal(getRestWarningState(1), 'none');
+  assert.equal(getRestWarningState(4), 'none');
+
+  // Turn 5: orange warning (must rest soon)
+  assert.equal(getRestWarningState(5), 'warning');
+
+  // Turns >= 6: red penalty alert (mandatory rest on 6th turn)
+  assert.equal(getRestWarningState(6), 'penalty');
+  assert.equal(getRestWarningState(7), 'penalty');
+  assert.equal(getRestWarningState(10), 'penalty');
+});
+
+test('scale separation: dungeon turn vs travel day', () => {
+  // Dungeon turn = 10 minutes = 600s
+  assert.equal(convertToSeconds(1, 'turn'), 600);
+  // Travel day = 24 hours = 86400s
+  assert.equal(convertToSeconds(1, 'day'), 86400);
+  // 1 travel day = 144 dungeon exploration turns
+  assert.equal(convertToSeconds(1, 'day') / convertToSeconds(1, 'turn'), 144);
+});
+

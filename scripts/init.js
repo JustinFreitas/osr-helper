@@ -4,7 +4,6 @@ import { registerTurn } from './modules/turn.js';
 import { registerRations } from './modules/rations.js';
 import { registerUtil, intializePackFolders } from './modules/util.js';
 import { registerData, registerLocalizedData } from './data/osrHelperData.js';
-import { registerCustomEffectList } from './modules/old/customEffectList.js';
 import { registerReports } from './modules/reports.js';
 import { registerNameData } from './data/nameData.js';
 import { registerSettings } from './modules/settingsModule.js';
@@ -46,7 +45,6 @@ import {
 } from './modules/custom-attrib/custom-attrib-util.mjs';
 window.OSRH = window.OSRH || {
   moduleName: `osr-helper`,
-  ce: {},
   data: {},
   light: {},
   ration: {},
@@ -150,7 +148,6 @@ Hooks.once('ready', async () => {
 
   OSRH.ui = uiControls;
   if (OSRH.systemData.effects) {
-    registerCustomEffectList();
     // registerEffectModule();
     registerOsrActiveEffectModule();
     registerEffectData();

@@ -14,7 +14,7 @@ export class OSRHItemConfigV2 extends OSRHApp{
     id: 'osrh-app',
     position: {
       width: 300,
-      height: 200
+      height: "auto"
     },
     classes: ['osrh', 'item-config', 'v2'],
     tag: 'osrh-app', // The default is "div"

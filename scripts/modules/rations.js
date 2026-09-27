@@ -1,3 +1,5 @@
+import { isRationItem, parseQuantity } from '../lib/pure-helpers.mjs';
+
 export const registerRations = () => {
   OSRH.ration = OSRH.ration || {};
 
@@ -11,56 +13,48 @@ data: {
 
 
 
-  OSRH.ration.eat = async function (actorId=null) {
-    const tags = false//OSRH.systemData.tags;
+  OSRH.ration.eat = async function (actorId = null) {
+    const tags = OSRH.systemData?.tags;
     const qPath = OSRH.systemData.paths.itemQty;
-    let actor
-    if(actorId){
-      actor = game.actors.get(actorId)
-    }else if(OSRH.util.singleSelected()){
-      actor = canvas.tokens.controlled[0].actor
+    let actor;
+    if (actorId) {
+      actor = game.actors.get(actorId);
+    } else if (OSRH.util.singleSelected()) {
+      actor = canvas.tokens.controlled[0].actor;
     }
-    if(!actor){
-      ui.notifications.error(game.i18n.localize('OSRH.util.notification.singleToken'))
-      return
+    if (!actor) {
+      ui.notifications.error(game.i18n.localize('OSRH.util.notification.singleToken'));
+      return;
     }
 
     let rationOptions = '';
-    actor.items.map(i=>{
-      let isRat = i.flags?.['osr-helper']?.itemType === 'ration'
-      // if(tags) {
-      //   isRat = i.system.tags.find(t=>t.title === 'Ration') ? true : false
-      // }
-      // else {
-      //   isRat = i.flags?.['osr-helper']?.itemType === 'ration'
-      // };
-      if(isRat){
-        rationOptions += `<option value="${i.name}">${i.name}: ${OSRH.util.getNestedValue(i , qPath)}</option>`
+    actor.items.forEach((i) => {
+      if (isRationItem(i, tags)) {
+        rationOptions += `<option value="${i.name}">${i.name}: ${OSRH.util.getNestedValue(i, qPath)}</option>`;
       }
-    })
-    
-   
+    });
+
     let dialogTemplate = `
     <h1> ${game.i18n.localize("OSRH.ration.pickType")}</h1>
     <div style="display:flex">
     <div  style="flex:1"><select id="ration">${rationOptions}</select></div>
     </div>`;
     new foundry.applications.api.DialogV2({
-      window:{title: game.i18n.localize("OSRH.ration.eatRation")},
+      window: { title: game.i18n.localize("OSRH.ration.eatRation") },
       classes: ['ose', 'dialog', 'ration-dialog'],
       position: { width: 400, height: "auto" },
       content: dialogTemplate,
       buttons: [
-      {
+        {
           label: game.i18n.localize("OSRH.ration.eatRation"),
-          callback: async function(ev, btn, obj){
-            
+          callback: async function (ev, btn, obj) {
             let item = actor.items.getName(obj.element.querySelector('#ration').value);
-            let itemQty = OSRH.util.getNestedValue(item, qPath) - 1;
+            let rawQty = OSRH.util.getNestedValue(item, qPath);
+            let itemQty = parseQuantity(rawQty) - 1;
             if (itemQty <= 0) {
               await item.delete();
             } else {
-              await item.update({[qPath ]: itemQty})
+              await item.update({ [qPath]: itemQty });
             }
           }
         }
