@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-gygax75.1] 2026-10-17
+### changed
+- Merged upstream RabidOwlbear/osr-helper **v0.9.0** (`0a63e22` and `92a319d`).
+- **OSE ApplicationV2 Header Controls:** Adopted upstream registration of `getHeaderControlsApplicationV2` for the `ose` system in `scripts/modules/hooks/system-hooks.mjs`, enabling OSRH header controls on V2 sheets.
+- **Context Menu Theming:** Adopted upstream `.OSRH-menu` icon styling and custom `#context-menu .context-item:has(.OSRH-menu)` dark blue styling in `styles/main.css`.
+- **Character-Only Currency Converter:** Adopted upstream's `app.document.type == 'character'` guard in `scripts/modules/ui-controls.mjs` to prevent the Currency Converter button from cluttering monster actor sheets.
+- **Compendium Packs:** Synchronized updated item and macro pack journal logs across DCC and localized packs.
+### fixes
+- **Foundry V14 ApplicationV2 Item Config:** Preserved fork's V14 `render({ force: true, position: ... })` signature and polymorphic DOM unwrapping (`html instanceof HTMLElement ? html : html[0]`) in `system-hooks.mjs`, rejecting upstream's legacy ApplicationV1 `.render(true, ...)` and debug logging.
+- **Fork Identity:** Preserved gygax75 fork repository, release manifest URLs, and custom OSE missile damage and turn tracker enhancements.
+
 ## [0.8.4-gygax75.8] 2026-09-26
 ### fixes
 - **Turn Tracker Layout Restoration:** Reverted ApplicationV2 window height changes (`position: { height: 480 }`) and removed `min-height: 480px;` from `turn-tracker.scss`/`main.css`. Restored explicit window heights across `OSRHTurnTrackerV2` (480), `OSRHPartySheetV2` (400), `OSRHItemConfigV2` (200), and `OSRHApp` (400), eliminating empty viewport gaps above and below the docked tracker footer.
