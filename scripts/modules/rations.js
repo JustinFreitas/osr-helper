@@ -3,16 +3,6 @@ import { isRationItem, parseQuantity } from '../lib/pure-helpers.mjs';
 export const registerRations = () => {
   OSRH.ration = OSRH.ration || {};
 
-  /* 
-data: {
-  character: array containing player character names to be checked,
-  retainer: array containing the names of all active retainers to be checked.
-  whisper: boolean true send message via whisper
-}
-*/
-
-
-
   OSRH.ration.eat = async function (actorId = null) {
     const tags = OSRH.systemData?.tags;
     const qPath = OSRH.systemData.paths.itemQty;
@@ -30,25 +20,33 @@ data: {
     let rationOptions = '';
     actor.items.forEach((i) => {
       if (isRationItem(i, tags)) {
-        rationOptions += `<option value="${i.name}">${i.name}: ${OSRH.util.getNestedValue(i, qPath)}</option>`;
+        rationOptions += `<option value="${i.id}">${i.name}: ${OSRH.util.getNestedValue(i, qPath)}</option>`;
       }
     });
 
+    if (!rationOptions) {
+      ui.notifications.warn(game.i18n.localize('OSRH.report.none'));
+      return;
+    }
+
     let dialogTemplate = `
-    <h1> ${game.i18n.localize("OSRH.ration.pickType")}</h1>
+    <h1> ${game.i18n.localize('OSRH.ration.pickType')}</h1>
     <div style="display:flex">
-    <div  style="flex:1"><select id="ration">${rationOptions}</select></div>
+    <div style="flex:1"><select id="ration">${rationOptions}</select></div>
     </div>`;
     new foundry.applications.api.DialogV2({
-      window: { title: game.i18n.localize("OSRH.ration.eatRation") },
+      window: { title: game.i18n.localize('OSRH.ration.eatRation') },
       classes: ['ose', 'dialog', 'ration-dialog'],
-      position: { width: 400, height: "auto" },
+      position: { width: 400, height: 'auto' },
       content: dialogTemplate,
       buttons: [
         {
-          label: game.i18n.localize("OSRH.ration.eatRation"),
+          action: 'eat',
+          label: game.i18n.localize('OSRH.ration.eatRation'),
           callback: async function (ev, btn, obj) {
-            let item = actor.items.getName(obj.element.querySelector('#ration').value);
+            const selectedVal = obj.element.querySelector('#ration')?.value;
+            let item = actor.items.get(selectedVal) ?? actor.items.getName(selectedVal);
+            if (!item) return;
             let rawQty = OSRH.util.getNestedValue(item, qPath);
             let itemQty = parseQuantity(rawQty) - 1;
             if (itemQty <= 0) {
@@ -59,111 +57,42 @@ data: {
           }
         }
       ]
-    }).render(true);
+    }).render({ force: true });
   };
-  OSRH.RationConfig = class RationConfig extends FormApplication {
-    constructor(item = null) {
-      super();
-      
-      this.item = item;
-      this.rationData = item?.flags?.["osr-helper"]?.rationData || OSRH.data.defaultRationSettings;
-      this.rationData.name = item.name;
 
-    }
-    static get defaultOptions() {
-      return foundry.utils.mergeObject(super.defaultOptions, {
-        title: 'OSRH Ration Config',
-        classes: ['osrh', 'ration-config'],
-        top: 120,
-        left: 60,
-        width: 250,
-        height: 150,
-        template: `modules/osr-helper/templates/ration-config-form.hbs`
-      });
-    }
-  
-    getData() {
-      let context = super.getData();
-      let rationData = this.rationData;
-      let trackExp = typeof rationData !== 'undefined' ? this.rationData?.trackExpiration : true
-      context.name = this.rationData?.name;
-      context.trackExpiration = trackExp;//this.rationData?.trackExpiration || true;
-      context.rationDuration = this.rationData?.duration?.value || 7;
-      context.durationType = this.rationData?.duration?.type || 'day'
-
-      return context;
-    }
-    async activateListeners(html) {
-      const durInp = html.find('#duration')[0];
-      const durType = html.find('#duration-type')[0];
-      const trackExpiration = html.find('#track-expiration')[0];
-      const saveBtn = html.find('.save-btn')[0];
-      durType.value = this.rationData.duration.type
-      durInp.value = OSRH.util.convertFromSeconds(this.rationData.duration.value, this.rationData.duration.type);
-
-      durInp.addEventListener('change', ev=>{
-        ev.preventDefault();
-        this.rationData.duration.value = Math.floor(OSRH.CONST.timeInc[durType.value] * parseInt(durInp.value));
-      })
-      durType.addEventListener('change', ev=>{
-        ev.preventDefault();
-        let newDur = OSRH.util.convertTime(this.rationData.duration.value, durType.value);
-        durInp.value = newDur;
-        this.rationData.duration.type = durType.value;
-
-
-      })
-      trackExpiration.addEventListener('change', ev=>{
-        ev.preventDefault();
-        this.rationData.trackExpiration = trackExpiration.checked;
-      })
-      saveBtn.addEventListener('click', ev=>{
-        ev.preventDefault();
-        this.item.setFlag('osr-helper', 'rationData', this.rationData);
-
-        this.close()
-      })
-  
-    }
-    _updateObject(){
-  
-    }
-  }
-  OSRH.ration.handlePartyRations= async function(dur, durType){
-    let sec = Math.floor(dur * OSRH.CONST.timeInc[durType])
+  OSRH.ration.handlePartyRations = async function (dur, durType) {
+    let sec = Math.floor(dur * OSRH.CONST.timeInc[durType]);
     const party = OSRH.util.getPartyActors()?.party;
-    let partyRations = []
-    if(party){
-      for(let p of party){
+    let partyRations = [];
+    if (party) {
+      for (let p of party) {
         partyRations = partyRations.concat(OSRH.util.getOSRHItems(p, 'ration'));
       }
     }
-    if(partyRations.length){
-      partyRations.map(async r=>{
-        let data = await r.getFlag('osr-helper', 'rationData');
-        if(!data){
-          return
-        }
-        if(data.trackExpiration){
-          let newDur = data.duration.value - sec
-          if(newDur <= 0){
-            const itemName = r.name
-            data.duration.value = 0;
-            data.trackExpiration = false;
-            
-            await r.setFlag('osr-helper', 'rationData', data);
-            await r.update({name: `${itemName} - Expired`});
-         
-          }else{
-            data.duration.value = newDur;
-            await r.setFlag('osr-helper', 'rationData', data);
+    if (partyRations.length) {
+      await Promise.all(
+        partyRations.map(async (r) => {
+          let rawFlag = await r.getFlag('osr-helper', 'rationData');
+          if (!rawFlag) {
+            return;
           }
-        }
-        
+          let data = foundry.utils.deepClone(rawFlag);
+          if (data.trackExpiration && data.duration) {
+            let newDur = data.duration.value - sec;
+            if (newDur <= 0) {
+              const itemName = r.name;
+              data.duration.value = 0;
+              data.trackExpiration = false;
 
-      })
+              await r.setFlag('osr-helper', 'rationData', data);
+              await r.update({ name: `${itemName} - Expired` });
+            } else {
+              data.duration.value = newDur;
+              await r.setFlag('osr-helper', 'rationData', data);
+            }
+          }
+        })
+      );
     }
-  }
-
-
+  };
 };

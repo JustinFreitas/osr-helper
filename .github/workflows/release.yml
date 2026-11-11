@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Install dependencies
         run: |
@@ -47,7 +47,7 @@ jobs:
           TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.vars.outputs.version }}
         run: |
-          node <<'NODE'
+          node --input-type=commonjs <<'NODE'
           const fs = require('fs');
           const repo = process.env.REPO;            // owner/name
           const tag = process.env.TAG;              // release tag

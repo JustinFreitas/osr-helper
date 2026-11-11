@@ -6,7 +6,7 @@ export class OSRHAttackV2 extends OSRHApp {
   }
 
   static DEFAULT_OPTIONS = {
-    id: 'osrh-app',
+    id: 'osrh-attack-app',
     position: {
       width: 400,
       height: 176
@@ -74,11 +74,16 @@ export class OSRHAttackV2 extends OSRHApp {
     let selected = html.querySelector('#weapon');
     let skipCheck = html.querySelector('#skip')?.checked;
     let ammoCheck = html.querySelector(`#ammoCheck`)?.checked;
-    let weapon = this.actor.items.find((i) => i.id == selected.value);
+    let weapon = this.actor.items.find((i) => i.id == selected?.value);
+    if (!weapon) {
+      ui.notifications.warn(game.i18n.localize('OSRH.util.notification.noWeapon'));
+      return;
+    }
     let ammoData = ammoCheck ? await weapon.getFlag('osr-helper', 'ammunition') : null;
 
     if (ammoCheck && ammoData?.trackAmmo) {
-      let ammo = this.actor.items.find((i) => i.name == ammoData.items[0]);
+      const validAmmoNames = Array.isArray(ammoData.items) ? ammoData.items : [];
+      let ammo = this.actor.items.find((i) => validAmmoNames.includes(i.name));
       if (!ammo) {
         ui.notifications.warn(game.i18n.localize('OSRH.util.notification.noAmmo'));
         return;
@@ -88,6 +93,9 @@ export class OSRHAttackV2 extends OSRHApp {
         switch (OSRH.systemData.id) {
           case 'dcc':
             await weapon.parent.rollWeaponAttack(weapon.id, { showModifierDialog: skipCheck ? false : true });
+            break;
+          case 'wwn':
+            await weapon.rollWeapon({ skipDialog: skipCheck });
             break;
           case 'basicfantasyrpg':
             await bfrpgroll(weapon, this.actor, weapon.system.range.value);

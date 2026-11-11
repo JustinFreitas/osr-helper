@@ -1,46 +1,62 @@
+function itemHasTag(item, tagName) {
+  const tags = item?.system?.tags;
+  if (!Array.isArray(tags)) return false;
+  const target = tagName.toLowerCase();
+  return tags.some((t) => {
+    if (typeof t === 'string') return t.toLowerCase() === target;
+    return t?.value?.toLowerCase() === target || t?.title?.toLowerCase() === target;
+  });
+}
+
 export async function tagMigration() {
-  let migrated = await game.settings.get('osr-helper', 'migrationItemTags');
+  const migrated = await game.settings.get('osr-helper', 'migrationItemTags');
   if (OSRH.systemData.tags && !migrated) {
-    for (let item of game.items) {
-      handleTag(item);
+    for (const item of game.items) {
+      await handleTag(item);
+      await ratTagOp(item);
     }
-    for (let scene of game.scenes) {
-      for (let token of scene.tokens) {
-        let actor = token.actor;
-        actor?.items.map(async (i) => {
-          await handleTag(i);
-          await ratTagOp(i);
-        });
+    for (const scene of game.scenes) {
+      for (const token of scene.tokens) {
+        if (token.actorLink) continue;
+        const actor = token.actor;
+        if (!actor?.items) continue;
+        for (const item of actor.items) {
+          await handleTag(item);
+          await ratTagOp(item);
+        }
       }
     }
-    for (let actor of game.actors) {
-      for (let item of actor.items) {
-        handleTag(item);
+    for (const actor of game.actors) {
+      for (const item of actor.items) {
+        await handleTag(item);
+        await ratTagOp(item);
       }
     }
-    game.settings.set('osr-helper', 'migrationItemTags', true);
+    await game.settings.set('osr-helper', 'migrationItemTags', true);
   }
 }
 
 async function handleTag(item) {
-  if (item.system.tags.find((t) => t.value === 'Light')) {
+  if (itemHasTag(item, 'light')) {
     if (!item.getFlag('osr-helper', 'itemType')) {
       await item.setFlag('osr-helper', 'itemType', 'light');
     }
-  } else if (item.system.tags.find((t) => t.value === 'Ration')) {
+  } else if (itemHasTag(item, 'ration')) {
     if (!item.getFlag('osr-helper', 'itemType')) {
       await item.setFlag('osr-helper', 'itemType', 'ration');
     }
   }
 }
+
 async function ratTagOp(item) {
-  if (item.system.tags.find((t) => t.value === 'Ration')) {
-    let itemType = item.getFlag('osr-helper', 'itemType');
+  if (itemHasTag(item, 'ration')) {
+    const itemType = item.getFlag('osr-helper', 'itemType');
     if (!itemType) {
       await item.setFlag('osr-helper', 'itemType', 'ration');
     }
     if (!item.flags?.['osr-helper']?.rationData) {
-      let data =foundry.utils.mergeObject(OSRH.data.defaultRationSettings, { name: item.name });
+      const defaults = foundry.utils.deepClone(OSRH.data.defaultRationSettings);
+      const data = foundry.utils.mergeObject(defaults, { name: item.name });
       await item.setFlag('osr-helper', 'rationData', data);
     }
   }

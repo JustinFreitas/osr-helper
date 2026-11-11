@@ -11,7 +11,7 @@ export class OSRHItemConfigV2 extends OSRHApp{
     this.dispRation = options.ration
   }
   static DEFAULT_OPTIONS = {
-    id: 'osrh-app',
+    id: 'osrh-item-config',
     position: {
       width: 300,
       height: 200
@@ -94,7 +94,7 @@ export class OSRHItemConfigV2 extends OSRHApp{
         await item.setFlag('osr-helper', 'lightItemData', lightData)
       }
       if(itemType == 'ration' && !this.item.flags?.['osr-helper']?.rationData){        
-        let rationData = OSRH.data.defaultRationSettings;
+        let rationData = foundry.utils.deepClone(OSRH.data.defaultRationSettings);
         rationData.name = item.name;
         await item.setFlag('osr-helper', 'rationData', rationData);
       }

@@ -26,11 +26,8 @@ import { registerOsrActiveEffectModule } from './modules/active-effect/active-ef
 import { uiControls } from './modules/ui-controls.mjs';
 import { registerTravelConstants } from './modules/turn-tracker.mjs';
 import { hideForeignPacks } from './modules/hide-foreign-packs.mjs';
-import { lightConfig } from './modules/light-item-config.mjs';
 import { registerSystemData } from './data/registerSystemData.mjs';
 import { registerSystemHooks } from './modules/hooks/system-hooks.mjs';
-import { OSRHPartySheet } from './modules/party-sheet/party-sheet.mjs';
-import { AmmoItemConfig } from './modules/ammo-config.mjs';
 import { tagMigration } from './modules/migration/tagMigration.mjs';
 import { migrateAmmoFlag } from './modules/migration/ammoFlag.mjs';
 import { migrateSavedEffects } from './modules/migration/savedEffects.mjs';
@@ -74,10 +71,10 @@ Hooks.once('init', async function () {
 
   registerTravelConstants();
 
-  OSRH.gameVersion = game.version ? game.version : game.version;
-  OSRH.party = {}
-  OSRH.lightConfig = lightConfig;
-  OSRH.partySheet = OSRHPartySheet;
+  OSRH.gameVersion = game.version;
+  OSRH.party = {};
+  OSRH.lightConfig = LightConfigV2;
+  OSRH.partySheet = OSRHPartySheetV2;
   OSRH.CustomAttributeEdit = CustomAttributeEdit;
   OSRH.ManageCustomAttributes = ManageCustomAttributes;
   OSRH.V2 = {
@@ -91,12 +88,8 @@ Hooks.once('init', async function () {
     attack: OSRHAttackV2,
     effectsApp: OSRActiveEffectsAppV2,
     ammoConfig: AmmoConfigV2,
-  }
-  // OSRH.customAttributeConfig = CustomAttributeConfig;
-
-  // OSRH.advPartySheet = PartySheetAdvanced;
-  // OSRH.attack = osrhAttack;
-  OSRH.AmmoConfig = AmmoItemConfig;
+  };
+  OSRH.AmmoConfig = AmmoConfigV2;
 
   Hooks.callAll(`${OSRH.moduleName}.registered`);
 });
@@ -116,23 +109,24 @@ Hooks.once('socketlib.ready', () => {
   });
 });
 //update proc data if changed
-Hooks.on('updateSetting', async (a, b, c) => {
+Hooks.on('updateSetting', async (a) => {
   if (a.key === 'osr-helper.timeJournalName') {
+    if (game.user.id !== OSRH.util.singleGM()?.id) return;
     const newName = await game.settings.get(`${OSRH.moduleName}`, 'timeJournalName');
+    const turnData = foundry.utils.deepClone(await game.settings.get(`${OSRH.moduleName}`, 'turnData'));
     const oldName = turnData?.journalName;
-    const journal = await game.journal.getName(oldName);
-    //turn journal update
-    if (oldName && newName != oldName) {
-      console.log('journal name changed');
+    if (oldName && newName !== oldName) {
+      const journal = game.journal.getName(oldName);
       turnData.journalName = newName;
-      await journal.update({ name: newName });
+      await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData);
+      if (journal) {
+        await journal.update({ name: newName });
+      }
     }
   }
 
   if (a.key === 'osr-helper.turnData') {
-    const turnData = await game.settings.get(`${OSRH.moduleName}`, 'turnData');
-
-    await OSRH.socket.executeAsGM('setting', 'turnData', turnData, 'set');
+    OSRH.turn?.refreshTurnTracker?.();
   }
 });
 Hooks.once(`${OSRH.moduleName}.registered`, () => {});
@@ -208,25 +202,25 @@ Hooks.once('ready', async () => {
   }
 
   Hooks.on('createActor', async (actor) => {
-    if ((await game.settings.get(`${OSRH.moduleName}`, 'tokenLightDefault')) && game.user.isGM) {
+    if ((await game.settings.get(`${OSRH.moduleName}`, 'tokenLightDefault')) && game.user.id === OSRH.util.singleGM()?.id) {
       if (actor.type == 'character') {
         await actor.update({
-          token: {
+          prototypeToken: {
             displayBars: 30,
             displayName: 30,
             bar1: { attribute: 'hp' },
             disposition: 1,
+            actorLink: true,
+            sight: { enabled: true },
             light: {
               alpha: 0.5,
+              color: '#ff9924',
               animation: {
                 intensity: 5,
                 speed: 3,
-                type: 'Torch'
+                type: 'torch'
               }
-            },
-            lightColor: '#ff9924',
-            vision: true,
-            actorLink: true
+            }
           }
         });
       }
@@ -290,9 +284,7 @@ Hooks.on('renderActorSheet', async (sheetEl, html, actorObj, c) => {
           aeBtn.appendChild(aeIcon);
           aeBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (Object.values(ui.windows).filter((i) => i.id == `activeEffectList.${actorObj.id}`).length == 0) {
-              OSRH.effect.renderEffectApp(sheetEl.object);
-            }
+            OSRH.effect.renderEffectApp(sheetEl.object);
           });
           btnCont.appendChild(aeBtn);
         }
@@ -325,9 +317,16 @@ Hooks.on('renderActorSheet', async (sheetEl, html, actorObj, c) => {
             caBtn.appendChild(caIcon);
             caBtn.addEventListener('click', async (e) => {
               e.preventDefault();
-              if (Object.values(ui.windows).filter((i) => i.options.id == `OSRHManageAttributes`).length == 0) {
+              const openMgr = OSRH.util.getApp('OSRHManageAttributes')
+                || Object.values(ui.windows ?? {}).find((i) => i.options?.id == `OSRHManageAttributes`);
+              if (!openMgr) {
                 let left = e.x - 350 > 0 ? e.x - 350 : 0;
-                new OSRH.ManageCustomAttributes(actorObj).render(true, { top: e.y - 130, left: left - 15 });
+                new OSRH.ManageCustomAttributes(sheetEl.object ?? actorObj).render({
+                  force: true,
+                  position: { top: e.y - 130, left: left - 15 }
+                });
+              } else {
+                openMgr.render({ force: true });
               }
             });
             btnCont.appendChild(caBtn);

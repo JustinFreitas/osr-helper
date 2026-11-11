@@ -20,7 +20,7 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
     tabs: [{ navSelector: '.sheet-tabs', contentSelector: '.window-content', initial: 'list' }],
     window: {
       icon: 'fas fa-gear', // You can now add an icon to the header
-      title: '' //localization string
+      title: 'Active Effects' //localization string
     },
     // dragDrop: [{ dragSelector: '[data-drag]', dropSelector: '.drop' }],
     actions: {}
@@ -46,7 +46,8 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
     context = foundry.utils.mergeObject(context, {});
     effectPresets.map((e) => {
       if (e.icon === 'none') e.icon = '-Icon-';
-      const icon = OSRH.data.effectIcons.find((i) => i.name === e?.icon);
+      const icon = OSRH.data.effectIcons.find((i) => i.name === e?.icon) || OSRH.data.effectIcons[0];
+      if (!icon) return;
       e.iconColor = icon.color;
       e.iconText = icon.textColor;
       e.iconPath = icon.path;
@@ -309,7 +310,7 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
       const selfData = await this.effectListGetData(selfFx, 'self');
       const otherData = await this.effectListGetData(otherFx, 'other');
       let actorObj = {
-        name: actor.name,
+        name: actor?.name || '',
         uuid: actorList[i],
         self: selfData,
         other: otherData
@@ -348,13 +349,13 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
     const duration = parseInt(durationEl.value) * durVal[intervalEl.value];
     const effects = [...listEl.querySelectorAll('.effect-row')];
     const iconName = iconSelect.value;
-    const iconObj = OSRH.data.effectIcons.find((i) => i.name == iconName);
+    const iconObj = OSRH.data.effectIcons.find((i) => i.name == iconName) || OSRH.data.effectIcons[0];
     const creatorId = this.displayAll ? game.user.uuid : this.actor.uuid;
     const effectData = {
       name: nameEl.value,
-      icon: iconObj.path,
-      iconName: iconObj.name,
-      tint: iconObj.color,
+      icon: iconObj?.path,
+      iconName: iconName === 'none' ? 'none' : iconObj?.name,
+      tint: iconObj?.color,
       mode: 2,
       priority: 0,
       changes: [],
@@ -375,7 +376,9 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
     effects.map((eff) => {
       const selectEl = eff.querySelector('.effect-select');
       const path = selectEl?.value;
+      if (!path || path === 'null') return;
       const option = html.querySelector(`.effect-option[value="${path}"]`);
+      if (!option) return;
       const value = parseInt(eff.querySelector('.mod-input').value);
       const change = { key: path, value };
       const flag = { name: option.dataset.display, value };
@@ -436,9 +439,9 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
     this.numInputListener(numInp);
     const delBtn = document.createElement('a');
     delBtn.classList.add('del-effect-row');
-    delBtn.innerHTML = `<i class="fa-solid fa-delete-left"><i>`;
+    delBtn.innerHTML = `<i class="fa-solid fa-delete-left"></i>`;
     delBtn.addEventListener('click', (e) => {
-      e.preventDefault;
+      e.preventDefault();
       newRow.remove();
     });
     if (data) {
@@ -472,7 +475,9 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
     };
     effectEls.map((el) => {
       const selecteEl = el.querySelector('.effect-select');
+      if (!selecteEl?.value || selecteEl.value === 'null') return;
       const selectedEl = selecteEl.querySelector(`[value="${selecteEl.value}"]`);
+      if (!selectedEl) return;
       const valueInp = el.querySelector('.mod-input');
       effectObj.changes.push({
         path: selecteEl.value,
@@ -484,22 +489,15 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
       return;
     } else {
       await OSRH.socket.executeAsGM('handleEffectPreset', 'add', effectObj);
-      // const effectPresets = await foundry.utils.deepClone(game.settings.get('osr-helper', 'effectPresets'));
-      // effectPresets.push(effectObj)
-      // await game.settings.set('osr-helper', 'effectPresets', effectPresets);
       this.render();
     }
   }
   async deleteEffectPreset(id) {
     await OSRH.socket.executeAsGM('handleEffectPreset', 'delete', id);
     this.render();
-
-    // const presets = foundry.utils.deepClone(await this.getEffectPresets()).filter(i=>i.id !== id);
-
-    // await game.settings.set('osr-helper', 'effectPresets', presets);
   }
   validateEffectObject(obj) {
-    if (obj.icon === 'none') {
+    if (obj.icon === 'none' || obj.icon === '-Icon-' || obj.iconName === 'none' || obj.iconName === '-Icon-' || !obj.icon) {
       ui.notifications.warn(game.i18n.localize('OSRH.notification.chooseIcon'));
       return false;
     }
@@ -507,7 +505,11 @@ export class OSRActiveEffectsAppV2 extends OSRHApp {
       ui.notifications.warn(game.i18n.localize('OSRH.util.notification.enterEffectName'));
       return false;
     }
-    if (obj.duration.seconds <= 0 && !obj.flags.data.isInf) {
+    const isPreset = typeof obj.duration === 'number';
+    const invalidDuration = isPreset
+      ? (Number.isNaN(obj.duration) || obj.duration <= 0) && obj.interval !== 'infinite'
+      : (Number.isNaN(obj.duration?.seconds) || (obj.duration?.seconds ?? 0) <= 0) && !obj.flags?.data?.isInf;
+    if (invalidDuration) {
       ui.notifications.warn(game.i18n.localize('OSRH.util.notification.enterEffectDuration'));
       return false;
     }

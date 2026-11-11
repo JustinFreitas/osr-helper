@@ -176,7 +176,7 @@ export const registerTurn = () => {
         let results = table.filter((i) => i.val <= res);
         result = results[results.length - 1];
       }
-      return `${result.name}<br>${result.description}`
+      return result.text ?? `${result.name ?? ''}<br>${result.description ?? ''}`;
     };
     let result = getResultText(tRoll, tables[type]);
     const typeText = type.toLowerCase() == 'npc' ? 'NPC' : 'Monster';
@@ -192,12 +192,11 @@ export const registerTurn = () => {
   `;
 
     let chatData = {
-      user: game.user._id,
+      user: game.user.id,
       speaker: ChatMessage.getSpeaker(),
-      roll: roll,
+      rolls: [roll],
       content: content,
-      sound: CONFIG.sounds.dice,
-      type: CONST.CHAT_MESSAGE_TYPES.ROLL
+      sound: CONFIG.sounds.dice
     };
     ChatMessage.create(chatData);
   };
@@ -207,7 +206,7 @@ export const registerTurn = () => {
     OSRH.turn.undoStack.push(originalData);
     OSRH.turn.redoStack = [];
     const data = foundry.utils.deepClone(originalData);
-    const encTableName = data.dungeon.eTables[data.dungeon.lvl - 1];
+    let encTableName = data.dungeon.eTables[data.dungeon.lvl - 1];
     let encTable = null;
     let reactTable = null;
 
@@ -231,7 +230,7 @@ export const registerTurn = () => {
     turnData.dungeon.noteHistory.push(originalData.dungeon.notes);
     turnData.dungeon.notes = '';
     if (await game.settings.get(`${OSRH.moduleName}`, 'restMessage')) {
-      OSRH.turn.restMsg(turnData.dungeon.rest, 'dungeon', data); //generate chat message regarding rest status
+      await OSRH.turn.restMsg(turnData.dungeon.rest, 'dungeon', turnData, false); //generate chat message regarding rest status
     }
     if (turnData.dungeon.rollEnc && encTableName !== 'none') {
       //if tableRoll is true
@@ -257,15 +256,20 @@ export const registerTurn = () => {
           const roll = await encTable.roll();
           let content = ``;
           for (let res of roll.results) {
-            content += `<br/>${res.name}<br/>`
-            content += `<br/>${res.description}<br/>`;
+            if (res.documentUuid) {
+              const label = res.name || res.description || res.text || '';
+              content += `<br/>@UUID[${res.documentUuid}]${label ? `{${label}}` : ''}<br/>`;
+            } else {
+              content += `<br/>${res.name ?? ''}<br/>`;
+              content += `<br/>${res.description ?? res.text ?? ''}<br/>`;
+            }
             content += `<br>`;
           }
           if (roll.roll._evaluated) {
             const message = {
               flavor: `<span style='color: red'>${OSRH.util.tableFlavor()}</span>`,
               user: game.user.id,
-              roll: roll.roll,
+              rolls: [roll.roll],
               speaker: ChatMessage.getSpeaker(),
               content: content,
               whisper: gm
@@ -275,7 +279,10 @@ export const registerTurn = () => {
             if (turnData.dungeon.rollReact) {
               reactTable = game.tables.getName(turnData.dungeon.rTable);
               let reactRoll = await reactTable.roll();
-              let rollResult = `${reactRoll.results[0].name}<br>They look ${reactRoll.results[0].description}.`;
+              const rr = reactRoll.results[0] ?? {};
+              let rollResult = rr.description
+                ? `${rr.name ? `${rr.name}<br>` : ''}They look ${rr.description}.`
+                : `${rr.text || rr.name || ''}`;
               message.content += rollResult;
               await game?.dice3d?.showForRoll(reactRoll.roll, game.user, false, gm, false);
             }
@@ -318,13 +325,14 @@ export const registerTurn = () => {
       }
     }
 
-    turnData = foundry.utils.deepClone(await OSRH.turn.incrementTurnData('travel', true, turnData));
+    turnData = foundry.utils.deepClone(await OSRH.turn.incrementTurnData('travel', false, turnData));
     turnData.travel.noteHistory.push(originalData.travel.notes);
     turnData.travel.notes = '';
     travelData = turnData.travel;
     if (await game.settings.get(`${OSRH.moduleName}`, 'restMessage')) {
-      OSRH.turn.restMsg(turnData.travel.rest, 'travel'); //generate chat message regarding rest status
+      await OSRH.turn.restMsg(turnData.travel.rest, 'travel', turnData, false); //generate chat message regarding rest status
     }
+    await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData);
     if (travelData.rollEnc && encTableName !== 'none') {
       if (travelData.proc && travelData.proc > 0) {
         const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
@@ -344,17 +352,20 @@ export const registerTurn = () => {
             if (roll.roll._evaluated) {
               let content = ``;
               for (let res of roll.results) {
-                if (!res.documentCollection.length) {
-                  content += `<br>${res.name}<br/>${res.description}<br/>`;
+                if (res.documentUuid) {
+                  const label = res.name || res.description || res.text || '';
+                  content += `<br/>@UUID[${res.documentUuid}]${label ? `{${label}}` : ''}<br/>`;
+                } else if (res.documentCollection?.length && res.documentId) {
+                  content += `<br/>@UUID[${res.documentCollection}.${res.documentId}]{${res.text ?? res.name ?? ''}}<br/>`;
                 } else {
-                  content += `<br/>@${res.documentCollection}[${res.description}]<br/>`;
+                  content += `<br>${res.name ?? ''}<br/>${res.description ?? res.text ?? ''}<br/>`;
                 }
                 content += `<br>`;
               }
               const message = {
                 flavor: `<h3>Encounter ${i + 1}</h3><span style='color: red'>${OSRH.util.tableFlavor()}</span>`,
                 user: game.user.id,
-                roll: roll.roll,
+                rolls: [roll.roll],
                 speaker: ChatMessage.getSpeaker(),
                 content: content,
                 whisper: gm
@@ -364,7 +375,10 @@ export const registerTurn = () => {
               if (travelData.rollReact) {
                 reactTable = await game.tables.getName(travelData.rTable); //game.tables.find((t) => t.name === data.rTable);
                 let reactRoll = await reactTable.roll();
-                let rollResult = `${reactRoll.results[0].name}<br>They look ${reactRoll.results[0].description}.`;
+                const rr = reactRoll.results[0] ?? {};
+                let rollResult = rr.description
+                  ? `${rr.name ? `${rr.name}<br>` : ''}They look ${rr.description}.`
+                  : `${rr.text || rr.name || ''}`;
                 message.content += rollResult;
                 await game?.dice3d?.showForRoll(reactRoll.roll, game.user, false, gm, false);
               }
@@ -446,11 +460,13 @@ export const registerTurn = () => {
       <p> ${game.i18n.localize("OSRH.turn.count.total")}: ${turnData.travel.total}</p>
       <p>${game.i18n.localize("OSRH.turn.count.sinceRest")}: ${turnData.travel.rest}</p>`;
     }
-    await page.update({ text: { content: jContent } });
+    if (page) {
+      await page.update({ text: { content: jContent } });
+    }
     return;
   };
 
-  OSRH.turn.restMsg = async function (count, type, data = false) {
+  OSRH.turn.restMsg = async function (count, type, data = false, persist = true) {
     const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
     const whisper = await game.settings.get(`${OSRH.moduleName}`, 'whisperRest');
     const turnData = data ? data : foundry.utils.deepClone(await game.settings.get(`${OSRH.moduleName}`, 'turnData'));
@@ -469,8 +485,10 @@ export const registerTurn = () => {
       if (count >= 6) {  // gygax75, continuously show the warning until they rest.
         content += penalty;
       }
-      
-      await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData);
+
+      if (persist) {
+        await game.settings.set(`${OSRH.moduleName}`, 'turnData', turnData);
+      }
       chatData.content = content;
       ChatMessage.create(chatData);
       return;

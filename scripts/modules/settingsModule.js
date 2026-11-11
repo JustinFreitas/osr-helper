@@ -333,4 +333,11 @@ export const registerSettings = async function () {
     default: false,
     config: false
   });
+  game.settings.register(`${OSRH.moduleName}`, `migrationAmmoFlags`, {
+    name: 'migrationAmmoFlags',
+    scope: 'world',
+    type: Boolean,
+    default: false,
+    config: false
+  });
 };

@@ -36,12 +36,12 @@ export class TravelCalculatorV2 extends OSRHApp {
       width: 400,
       height: 650
     },
-    classes: ['application', 'testApp', 'v2'],
+    classes: ['osrh', 'application', 'testApp', 'v2'],
     tag: 'osrh-app', // The default is "div"
     // tabs: [{ navSelector: '.tabs', contentSelector: '.sheet-body', initial: 'main' }],
     window: {
       icon: 'fas fa-gear', // You can now add an icon to the header
-      title: '' //localization string
+      title: 'Travel Calculator' //localization string
     },
     actions: {}
   };
@@ -66,7 +66,7 @@ export class TravelCalculatorV2 extends OSRHApp {
     }
 
     //convert to miles
-    context.baseRate = Math.floor((slowest * this.systemData.baseMovMod) / 5);
+    context.baseRate = slowest ? Math.floor((slowest * this.systemData.baseMovMod) / 5) : 0;
     context.ose = game.modules.get('old-school-essentials')?.active || false;
     context.characters = this.partyData(partyObj.characters);
     context.retainers = this.partyData(partyObj.retainers);
@@ -119,19 +119,22 @@ export class TravelCalculatorV2 extends OSRHApp {
     return data;
   }
   async lostRoll() {
-    const radio = document.querySelector(`[name=terrain]:checked`).value;
-    const bonus = document.querySelector(`#nav-bonus`);
+    const html = this.element;
+    const radio = html.querySelector(`[name=terrain]:checked`)?.value ?? 'clear';
+    const bonus = html.querySelector(`#nav-bonus`);
     const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
     if (radio == 'road' || radio == 'trail') {
       ui.notifications.warn(game.i18n.localize('OSRH.report.cantGetLost'));
       return;
     }
-    let roll = await new Roll(`1d6 + ${bonus.value}`).evaluate();
+    let roll = await new Roll(`1d6 + ${parseInt(bonus?.value) || 0}`).evaluate();
     let target = this.lostMod[radio] || 2;
 
     if (roll.total <= target) {
       let data = {
-        whisper: [game.user],
+        user: game.user.id,
+        whisper: [game.user.id],
+        rolls: [roll],
         flavor: `
           <h3>${game.i18n.localize('OSRH.report.navCheck')}: ${radio}</h3>
           <span style="color: red">${game.i18n.localize('OSRH.report.navCheckFail')}</span>`
@@ -140,7 +143,9 @@ export class TravelCalculatorV2 extends OSRHApp {
       ChatMessage.create(data);
     } else {
       let data = {
-        whisper: [game.user],
+        user: game.user.id,
+        whisper: [game.user.id],
+        rolls: [roll],
         flavor: `
           <h3>${game.i18n.localize('OSRH.report.navCheck')}: ${radio}</h3>
           ${game.i18n.localize('OSRH.report.navCheckSuccess')}
@@ -150,22 +155,27 @@ export class TravelCalculatorV2 extends OSRHApp {
       ChatMessage.create(data);
     }
 
-    bonus.value = 0;
+    if (bonus) bonus.value = 0;
   }
   rollEnc() {
-    OSE.util.wildEncounter();
+    if (globalThis.OSE?.util?.wildEncounter) {
+      OSE.util.wildEncounter();
+    } else {
+      OSRH.turn?.travelTurn?.();
+    }
   }
   async forageCheck() {
-    const modEl = document.getElementById('forage-bonus');
-    const mod = parseInt(modEl.value);
-    const terrain = document.querySelector(`[name=terrain]:checked`).value;
+    const html = this.element;
+    const modEl = html.querySelector('#forage-bonus');
+    const mod = parseInt(modEl?.value) || 0;
+    const terrain = html.querySelector(`[name=terrain]:checked`)?.value ?? 'clear';
     const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
     let roll = await new Roll(`1d6 + ${mod}`).evaluate();
     if (roll.total <= 3) {
       let cData = {
         user: game.user.id,
         whisper: gm,
-        roll: roll,
+        rolls: [roll],
         flavor: `
           <h3>${game.i18n.localize('OSRH.report.forageCheck')}: ${terrain}</h3>
           <div><span style="color: red"><b>${game.i18n.localize('OSRH.report.forageFail')}</b></span></div>
@@ -177,7 +187,7 @@ export class TravelCalculatorV2 extends OSRHApp {
       let cData = {
         user: game.user.id,
         whisper: gm,
-        roll: roll,
+        rolls: [roll],
         flavor: `
           <h3>${game.i18n.localize('OSRH.report.forageCheck')}: ${terrain}</h3>
           <div><span style="color: green"><b>${game.i18n.localize('OSRH.report.forageSuccess')}</b></span></div>
@@ -186,20 +196,22 @@ export class TravelCalculatorV2 extends OSRHApp {
       await game?.dice3d?.showForRoll(roll, game.user, false, gm, false);
       ChatMessage.create(cData);
     }
-    modEl.value = 0;
+    if (modEl) modEl.value = 0;
   }
 
   async updatePartyDist(mod) {
-    const rateEl = document.getElementById('BTR');
-    const charEl = document.getElementById('character-list');
-    const retEl = document.getElementById('retainer-list');
+    const html = this.element;
+    const rateEl = html.querySelector('#BTR');
+    const charEl = html.querySelector('#character-list');
+    const retEl = html.querySelector('#retainer-list');
     const upData = await this.getTravelData(mod);
 
-    rateEl.innerText = upData.baseRate;
-    charEl.innerHTML = upData.html.characters;
-    retEl.innerHTML = upData.html.retainers;
+    if (rateEl) rateEl.innerText = upData.baseRate;
+    if (charEl) charEl.innerHTML = upData.html.characters;
+    if (retEl) retEl.innerHTML = upData.html.retainers;
   }
   async getTravelData(mod) {
+    const renderTpl = foundry.applications?.handlebars?.renderTemplate ?? renderTemplate;
     const partyObj = OSRH.util.getPartyActors();
     if (!partyObj.party.length) {
       return {
@@ -216,11 +228,11 @@ export class TravelCalculatorV2 extends OSRHApp {
     }
     let slowest = parseInt(OSRH.util.getNestedValue(partyObj.party[0], this.systemData.paths.encMov));
     partyObj.party.forEach((a) => {
-      let rate = OSRH.util.getNestedValue(a, this.systemData.paths.encMov);
+      let rate = parseInt(OSRH.util.getNestedValue(a, this.systemData.paths.encMov));
       if (slowest > rate) slowest = rate;
     });
     //convert to miles
-    const convertedRate = Math.floor((slowest / 5) * mod);
+    const convertedRate = Math.floor(((slowest * this.systemData.baseMovMod) / 5) * mod);
     let retData = {
       baseRate: convertedRate,
       data: {
@@ -229,8 +241,8 @@ export class TravelCalculatorV2 extends OSRHApp {
       },
       html: {}
     };
-    retData.html.characters = await renderTemplate('modules/osr-helper/templates/travel-report-character-list.hbs', { actors: retData.data.characters });
-    retData.html.retainers = await renderTemplate('modules/osr-helper/templates/travel-report-character-list.hbs', { actors: retData.data.retainers });
+    retData.html.characters = await renderTpl('modules/osr-helper/templates/travel-report-character-list.hbs', { actors: retData.data.characters });
+    retData.html.retainers = await renderTpl('modules/osr-helper/templates/travel-report-character-list.hbs', { actors: retData.data.retainers });
     return retData;
   }
 }

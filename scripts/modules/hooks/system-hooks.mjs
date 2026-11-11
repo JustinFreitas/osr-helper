@@ -1,4 +1,3 @@
-import { OSRHItemConfig } from '../item-config.mjs';
 import { injectOSRHSheetUI } from '../ui-controls.mjs';
 import { injectV2Controls } from '../ui-controls.mjs';
 export async function registerSystemHooks() {

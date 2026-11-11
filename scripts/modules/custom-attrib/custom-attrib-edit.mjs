@@ -1,86 +1,118 @@
-export class CustomAttributeEdit extends FormApplication {
+import { OSRHApp } from '../v2/base/osr-app.mjs';
+
+export class CustomAttributeEdit extends OSRHApp {
   constructor(attrib, actorId, managerCoord = false) {
-    super();
-    this.attrib = attrib;
-    this.actorId = actorId;
-    this.managerCoord = managerCoord;
+    const isOptionsObj = attrib && typeof attrib === 'object' && 'attrib' in attrib;
+    const resolvedAttrib = isOptionsObj ? attrib.attrib : attrib;
+    const resolvedActorId = isOptionsObj ? attrib.actorId : actorId;
+    const resolvedCoord = isOptionsObj ? (attrib.managerCoord ?? false) : managerCoord;
+    super(isOptionsObj ? attrib : {});
+    this.attrib = resolvedAttrib ?? { id: foundry.utils?.randomID?.() ?? '', name: '', abbr: '', value: 0, items: [] };
+    if (!Array.isArray(this.attrib.items)) this.attrib.items = [];
+    this.actorId = resolvedActorId;
+    this.managerCoord = resolvedCoord;
   }
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      title: game.i18n.localize('OSRH.attribConfig.title'), //'OSRH Custom Attribute Config',
-      classes: ['osrh', 'attribute-config'],
-      id: 'OSRHAttributeConfig',
-      top: 120,
-      left: 60,
+
+  static DEFAULT_OPTIONS = {
+    id: 'OSRHAttributeConfig',
+    position: {
       width: 350,
       height: 165,
-      template: `modules/osr-helper/templates/custom-attribute/attribute-config-form.hbs`,
-      dragDrop: [
-        {
-          dragSelector: '.item',
-          dropSelector: '.items'
-        }
-      ]
-    });
-  }
-  async getData() {
+      top: 120,
+      left: 60
+    },
+    classes: ['app', 'osrh', 'attribute-config', 'v2'],
+    tag: 'osrh-app',
+    window: {
+      icon: 'fas fa-gear',
+      title: 'OSRH.attribConfig.title'
+    },
+    dragDrop: [
+      {
+        dragSelector: '.item',
+        dropSelector: '.items'
+      }
+    ],
+    actions: {}
+  };
+
+  static PARTS = {
+    main: {
+      template: 'modules/osr-helper/templates/custom-attribute/attribute-config-form.hbs'
+    }
+  };
+
+  async _prepareContext(options) {
+    let context = await super._prepareContext(options);
     const items = [];
     for (let item of this.attrib.items) {
       const obj = await fromUuid(item.uuid);
-      items.push(obj);
+      if (obj) items.push(obj);
     }
-    const context = super.getData();
     context.name = this.attrib.name;
     context.abbr = this.attrib.abbr;
     context.items = items;
-    context.noItems = this.attrib.items.length ? false : true;
+    context.noItems = items.length === 0;
     return context;
   }
-  activateListeners(html) {
-    const deleteItemBtns = [...html.find('.delete-item')];
-    const abbrInp = html.find('#abbreviation')[0];
-    const attribNameInp = html.find('#attrib-name')[0];
-    const saveBtn = html.find('#save-btn')[0];
 
-    deleteItemBtns.map((btn) => {
+  _onRender(context, options) {
+    this.dragDrop.forEach((d) => d.bind(this.element));
+    const html = this.element;
+    const deleteItemBtns = [...html.querySelectorAll('.delete-item')];
+    const abbrInp = html.querySelector('#abbreviation');
+    const attribNameInp = html.querySelector('#attrib-name');
+    const saveBtn = html.querySelector('#save-btn');
+
+    deleteItemBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const atribEl = e.target.closest('.atrib-item');
-        const uuid = atribEl.id;
-        const id = atribEl.dataset.id;
-        let newList = [];
-        newList = this.attrib.items.filter((i) => i.uuid != uuid);
+        const uuid = atribEl?.id;
+        let newList = this.attrib.items.filter((i) => i.uuid != uuid);
         if (newList.length == 1 && newList[0].uuid === uuid) newList = [];
         this.attrib.items = newList;
-        this.render();
+        this.render({ force: true });
       });
     });
-    abbrInp.addEventListener('change', (e) => {
+
+    abbrInp?.addEventListener('change', (e) => {
       e.preventDefault();
-      this.attrib.abbr = abbrInp.value.slice(0, 3).toUpperCase();
-      if (this.attrib.abbr.length < 3 || this.attrib.abbr.length > 3) {
+      this.attrib.abbr = abbrInp.value.trim().slice(0, 3).toUpperCase();
+      abbrInp.value = this.attrib.abbr;
+      if (this.attrib.abbr.length !== 3) {
         ui.notifications.warn(game.i18n.localize('OSRH.util.notification.abbrLengthWarn'));
       }
     });
-    attribNameInp.addEventListener('change', (e) => {
+
+    attribNameInp?.addEventListener('change', (e) => {
       e.preventDefault();
-      this.attrib.name = attribNameInp.value;
+      this.attrib.name = attribNameInp.value.trim();
     });
-    saveBtn.addEventListener('click', async (e) => {
+
+    saveBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
+      if (abbrInp) this.attrib.abbr = abbrInp.value.trim().slice(0, 3).toUpperCase();
+      if (attribNameInp) this.attrib.name = attribNameInp.value.trim();
       await this._saveAttribute();
     });
   }
+
   async _onDrop(event) {
-    const dragData = TextEditor.getDragEventData(event);
-    if (dragData.type != 'Item' || !dragData.uuid) {
+    const dragData =
+      parseInt(game.version, 10) < 13
+        ? TextEditor.getDragEventData(event)
+        : foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    if (dragData?.type != 'Item' || !dragData.uuid) {
       return;
     }
     const item = await fromUuid(dragData.uuid);
+    const parentId = item?.parent?.id ?? item?.parent?._id;
     if (
-      item?.parent?._id !== this.actorId ||
+      !item ||
+      parentId !== this.actorId ||
       item.type != 'ability' ||
-      item.system.roll === '' ||
+      !item.system?.roll ||
       !item.system.roll.includes('d')
     ) {
       ui.notifications.warn(game.i18n.localize('OSRH.util.notification.itemAbilDropWarn'));
@@ -88,20 +120,21 @@ export class CustomAttributeEdit extends FormApplication {
     }
     const exists = this.attrib.items.find((i) => i.uuid == dragData.uuid);
     if (!exists) {
-      this.attrib.items.push({ uuid: dragData.uuid, id: dragData.item._id });
-      this.render();
+      this.attrib.items.push({ uuid: dragData.uuid, id: item.id ?? item._id });
+      this.render({ force: true });
     }
   }
+
   async _saveAttribute() {
     const actor = await game.actors.get(this.actorId);
-    let flagData = await foundry.utils.deepClone(actor.flags?.[OSRH.moduleName]?.customAttributes);
-    if(!flagData)flagData = [];
+    if (!actor) return;
+    let flagData = foundry.utils.deepClone(actor.flags?.[OSRH.moduleName]?.customAttributes) || [];
     const existing = flagData.find((i) => i.id === this.attrib.id);
-    if (!this.attrib.name.length) {
+    if (!this.attrib.name?.length) {
       ui.notifications.warn(game.i18n.localize('OSRH.util.notification.invalidAttribName'));
       return;
     }
-    if (!this.attrib.abbr.length == 3) {
+    if (this.attrib.abbr?.length !== 3) {
       ui.notifications.warn(game.i18n.localize('OSRH.util.notification.abbrLengthWarn'));
       return;
     }
@@ -113,25 +146,20 @@ export class CustomAttributeEdit extends FormApplication {
       flagData.push(this.attrib);
     }
     await actor.setFlag(OSRH.moduleName, 'customAttributes', flagData);
-    const actorObj = Object.values(ui.windows).find((i) => i.id.includes(actor.id));
-    if (actorObj) {
-      await actorObj.close();
-      actor.sheet.render(true);
+    if (actor.sheet?.rendered) {
+      actor.sheet.render({ force: true });
     }
-    let options;
-    if (this.managerCoord) {
-      options = { top: this.managerCoord.top, left: this.managerCoord.left };
-    } else {
-      options = {};
-    }
-    new OSRH.ManageCustomAttributes(actor).render(true, options);
+    const pos = this.managerCoord
+      ? { top: this.managerCoord.top, left: this.managerCoord.left }
+      : { top: this.position.top, left: this.position.left };
+    new OSRH.ManageCustomAttributes(actor).render({ force: true, position: pos });
     this.close();
   }
+
   _validateAttribData() {
-    let isValid = true;
-    if (this.attribute.name.length < 1) isValid = false;
-    if (this.attribute.abbr.length < 3 || this.attribute.abbr.length > 3) isValid = false;
-    return isValid;
+    if (!this.attrib?.name || this.attrib.name.length < 1) return false;
+    if (!this.attrib?.abbr || this.attrib.abbr.length !== 3) return false;
+    return true;
   }
 
   async _showAttribBar() {

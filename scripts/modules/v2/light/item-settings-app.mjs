@@ -9,7 +9,7 @@ export class ItemSettingsFormV2 extends OSRHApp {
   }
 
   static DEFAULT_OPTIONS = {
-    id: 'osrh-app',
+    id: 'osrh-item-settings',
     position: {
       width: 300,
       height: 580
@@ -19,7 +19,7 @@ export class ItemSettingsFormV2 extends OSRHApp {
     // tabs: [{ navSelector: '.tabs', contentSelector: '.sheet-body', initial: 'main' }],
     window: {
       icon: 'fas fa-gear', // You can now add an icon to the header
-      title: '' //localization string
+      title: 'Light Item Settings' //localization string
     },
     dragDrop: [{ dragSelector: '[data-drag]', dropSelector: '.drop' }],
     actions: {}
@@ -89,13 +89,12 @@ export class ItemSettingsFormV2 extends OSRHApp {
               : i.id == 'animation'
               ? i.value
               : parseInt(i.value);
+          if (i.id == 'animation' && i.value == 'none') value = null;
           formData[i.id] = value;
-          if(i.id == 'animation' && i.value == 'none') value = null;
-
         }
         ev.preventDefault();
         updateBtn.blur();
-
+        if (!this.item) return;
         await this.item.setFlag(`${OSRH.moduleName}`, 'lightItemData', formData);
         ui.notifications.info('Light Item Data Updated');
         this.close();

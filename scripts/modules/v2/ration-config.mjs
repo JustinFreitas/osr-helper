@@ -4,12 +4,14 @@ export class RationConfigV2 extends OSRHApp {
   constructor(options) {
     super(options);
     this.item = options.item;
-    this.rationData = options.item?.flags?.['osr-helper']?.rationData || OSRH.data.defaultRationSettings;
+    this.rationData = foundry.utils.deepClone(
+      options.item?.flags?.['osr-helper']?.rationData || OSRH.data.defaultRationSettings
+    );
     this.rationData.name = options.item.name;
   }
 
   static DEFAULT_OPTIONS = {
-    id: 'osrh-app',
+    id: 'osrh-ration-config',
     position: {
       width: 250,
       height: 200,
@@ -19,7 +21,7 @@ export class RationConfigV2 extends OSRHApp {
     // tabs: [{ navSelector: '.tabs', contentSelector: '.sheet-body', initial: 'main' }],
     window: {
       icon: 'fas fa-gear', // You can now add an icon to the header
-      title: '' //localization string
+      title: 'Ration Config' //localization string
     },
     dragDrop: [{ dragSelector: '[data-drag]', dropSelector: '.drop' }],
     actions: {}

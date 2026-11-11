@@ -38,9 +38,9 @@ export class OSRHApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dragDrop.forEach((d) => d.bind(this.element));
     this._forceTabInit(context.tabs);
   }
-  _getTabs(parts) {
+  _getTabs(parts, tabs = ['main']) {
     const tabGroup = 'primary';
-    const intialTab = this.options.tabs[0].initial;
+    const intialTab = this.options.tabs?.[0]?.initial ?? tabs[0];
     const tabData = {};
     // Default tab for first time it's rendered this session
     if (!this.tabGroups.primary) this.tabGroups.primary = intialTab;
@@ -92,7 +92,7 @@ export class OSRHApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @private
    */
   _createDragDropHandlers() {
-    return this.options.dragDrop.map((d) => {
+    return (this.options.dragDrop ?? []).map((d) => {
       d.permissions = {
         dragstart: this._canDragStart.bind(this),
         drop: this._canDragDrop.bind(this)

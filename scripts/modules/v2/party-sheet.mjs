@@ -16,18 +16,16 @@ export class OSRHPartySheetV2 extends OSRHApp{
     id: 'OSRH-party-sheet',
     position: {
       width: 300,
-      height: 400
+      height: 400,
+      top: 120,
+      left: 60
     },
     classes: ['osrh', 'application', 'party-sheet', 'v2'],
     tag: 'osrh-app', // The default is "div"
     tabs: [{ navSelector: '.sheet-tabs', contentSelector: '.window-content', initial: 'party' }],
     window: {
       icon: 'fas fa-gear', // You can now add an icon to the header
-      title: 'Party Sheet', //localization string,
-      position:{
-        top: 120,
-        left: 60,
-      }
+      title: 'Party Sheet' //localization string
     },
     dragDrop: [
       { dragSelector: '.item', dropSelector: '.items' },
@@ -209,8 +207,8 @@ export class OSRHPartySheetV2 extends OSRHApp{
     // this.formation.pool = this.formation.pool.filter(i=>i.uuid != uuid);
     let scope = OSRH.systemData.partySheet ? game.system.id : 'osr-helper';
     const actor = await fromUuid(uuid);
-    delete actor.flags[scope].party;
-    await actor.unsetFlag(scope, 'party');
+    if (actor?.flags?.[scope]) delete actor.flags[scope].party;
+    await actor?.unsetFlag(scope, 'party');
     await game.settings.set('osr-helper', 'currentFormation', { active: false, data: null, gridSize: this.gridSize });
     this.formation = await OSRHPartySheetV2.defaultFormationData(this.gridSize);
     this.render();
@@ -427,7 +425,7 @@ export class OSRHPartySheetV2 extends OSRHApp{
     if (!game.user.isGM) {
       return;
     }
-    const dragData = Math.floor(game.version) < 13 ? TextEditor.getDragEventData(event) : 
+    const dragData = parseInt(game.version, 10) < 13 ? TextEditor.getDragEventData(event) : 
     foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
     if (dragData.type != 'Actor' || !dragData.uuid) {
       return;
@@ -462,21 +460,32 @@ export class OSRHPartySheetV2 extends OSRHApp{
     }
 
     // grid drop
-    if (event.target.dataset.type == 'grid-cell') {
+    const cellEl = event.target?.closest?.('[data-type="grid-cell"]') ?? (event.target?.dataset?.type == 'grid-cell' ? event.target : null);
+    if (cellEl) {
       const grid = this.formation.grid;
       let pool = this.formation.pool;
-      const cellEl = event.target;
       let cellData = grid[cellEl.dataset.row][cellEl.dataset.cell];
-      const existing = cellData.uuid;
-      cellData.uuid = dragData.uuid;
-      cellData.img = actor.img;
-      cellData.name = actor.name;
-      this.formation.pool = pool.filter((i) => i.uuid != dragData.uuid);
-      if (dragData.origin) {
-        this.formation.grid[dragData.origin.row][dragData.origin.cell] = {
-          uuid: null,
-          img: null
-        };
+      const existingUuid = cellData.uuid;
+      const existingImg = cellData.img;
+      const existingName = cellData.name;
+      const isSameCell =
+        dragData.origin &&
+        String(dragData.origin.row) === String(cellEl.dataset.row) &&
+        String(dragData.origin.cell) === String(cellEl.dataset.cell);
+      if (!isSameCell) {
+        cellData.uuid = dragData.uuid;
+        cellData.img = actor.img;
+        cellData.name = actor.name;
+        this.formation.pool = pool.filter((i) => i.uuid != dragData.uuid);
+        if (dragData.origin) {
+          this.formation.grid[dragData.origin.row][dragData.origin.cell] = existingUuid && existingUuid !== dragData.uuid
+            ? { uuid: existingUuid, img: existingImg, name: existingName }
+            : { uuid: null, img: null, name: null };
+        } else if (existingUuid && existingUuid !== dragData.uuid) {
+          if (!this.formation.pool.some((i) => i.uuid === existingUuid)) {
+            this.formation.pool.push({ uuid: existingUuid, img: existingImg, name: existingName });
+          }
+        }
       }
       await game.settings.set('osr-helper', 'currentFormation', { active: true, data: this.formation, gridSize: this.gridSize});
     }
@@ -503,22 +512,23 @@ export class OSRHPartySheetV2 extends OSRHApp{
         event.dataTransfer.setData('text/plain', JSON.stringify(dragData));
         this.tempForm = foundry.utils.deepClone(this.formation);
         let offsets = this._getPartyoffsets(this.tempForm);
-        let hook = Hooks.once('createToken', async (a, b, c) => {
-          const leadToken = a;
-          if (leadToken.baseActor.uuid == leader) {
+        let hook = Hooks.once('createToken', async (leadToken, _opts, userId) => {
+          if (userId && userId !== game.user.id) return;
+          if ((leadToken.baseActor?.uuid ?? leadToken.actor?.uuid) == leader) {
             const scene = game.scenes.current;
             const size = scene.grid.size;
             const tokenDocs = [];
             for (let actor of offsets) {
               const actorObj = await fromUuid(actor.uuid);
+              if (!actorObj) continue;
               let tDoc = await actorObj.getTokenDocument();
               tDoc = await tDoc.toObject();
               tDoc.x = leadToken?.x + actor.offX * size;
               tDoc.y = leadToken?.y + actor.offY * size;
-              tDoc.actorlink = true;
+              tDoc.actorLink = true;
               tokenDocs.push(tDoc);
             }
-            if (tokenDocs.length) scene.createEmbeddedDocuments('Token', tokenDocs);
+            if (tokenDocs.length) await scene.createEmbeddedDocuments('Token', tokenDocs);
           }
           this.tempForm = null;
         });

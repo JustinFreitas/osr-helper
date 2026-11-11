@@ -1,4 +1,3 @@
-import { OSRHAttack } from './attack.mjs';
 import {
   getNestedValue,
   convertToSeconds,
@@ -344,7 +343,7 @@ export const registerUtil = () => {
               const tokens = canvas.tokens.controlled;
               if (nameType == 'none' || gender == 'none') {
                 ui.notifications.warn(game.i18n.localize('OSRH.util.notification.selectOption'));
-                OSRH.util.nameGenDiag();
+                OSRH.util.randomName();
                 return;
               }
               if (tokens.length && tokens.length == 1) {
@@ -353,12 +352,11 @@ export const registerUtil = () => {
                 let fullName = getName(nameType, gender);
                 // chat message
                 let cData = {
-                  type: 1,
                   user: game.user.id,
                   content: `${getRandomItem(prefix)} ${fullName}`
                 };
                 if (whisper) {
-                  cData.whisper = [game.user];
+                  cData.whisper = [game.user.id];
                 }
                 ChatMessage.create(cData);
                 await actor.update({
@@ -375,9 +373,9 @@ export const registerUtil = () => {
                 for (let t of tokens) {
                   let token = t;
                   let actor = t.actor;
-                  let newName = await getName(nameType, gender);
+                  let newName = getName(nameType, gender);
 
-                  if (actor.type == 'character') {
+                  if (actor && (actor.type == 'character' || actor.prototypeToken?.actorLink)) {
                     await actor.update({
                       name: newName,
                       prototypeToken: {
@@ -388,52 +386,45 @@ export const registerUtil = () => {
 
                   await token.document.update({ name: newName });
                   let cData = {
-                    type: 1,
                     user: game.user.id,
                     content: `${getRandomItem(prefix)} ${newName}`
                   };
                   if (whisper) {
-                    cData.whisper = [game.user];
+                    cData.whisper = [game.user.id];
                   }
                   ChatMessage.create(cData);
-                  await actor.update({
-                    name: newName,
-                    prototypeToken: {
-                      name: newName
-                    }
-                  });
-                  await token.document.update({ name: newName });
                   ui.notifications.info(game.i18n.localize('OSRH.util.notification.tokenActorNameUpdated'));
                 }
                 return;
               }
               if (!canvas.tokens.controlled.length && focusedSheet) {
-                const charSheet = focusedSheet; //document.querySelector('.ose.sheet.actor.character');
-                const name = charSheet ? charSheet.querySelector('.ose.sheet.actor .window-title').innerText : 'none';
+                const charSheet = focusedSheet;
+                const name = charSheet ? charSheet.querySelector('.window-title')?.innerText : 'none';
                 const actor = game.actors.getName(name);
-                let fullName = getName(nameType, gender);
-                await actor.update({
-                  name: fullName,
-                  token: {
-                    name: fullName
-                  }
-                });
-                return;
+                if (actor) {
+                  let fullName = getName(nameType, gender);
+                  await actor.update({
+                    name: fullName,
+                    prototypeToken: {
+                      name: fullName
+                    }
+                  });
+                  return;
+                }
               }
               let fullName = getName(nameType, gender);
               let cData = {
-                type: 1,
                 user: game.user.id,
                 content: `${getRandomItem(prefix)} ${fullName}`
               };
               if (whisper) {
-                cData.whisper = [game.user];
+                cData.whisper = [game.user.id];
               }
               ChatMessage.create(cData);
             }
           }
         ]
-      });
+      }).render({ force: true });
     }
     if (type) {
       let gdr = gender ? gender : 'all';
@@ -453,45 +444,58 @@ export const registerUtil = () => {
     return currencyList;
   };
   OSRH.util.curConvert = async function (amt, curCur, newCur, uuid) {
-    const actor = await fromUuid(uuid)
-    
-    const curItems = actor.items;
+    const actor = typeof uuid === 'string' ? await fromUuid(uuid) : uuid;
+    if (!actor) {
+      ui.notifications.warn(game.i18n.localize('OSRH.util.notification.noTokenSelected'));
+      return;
+    }
+    const resolvedUuid = actor.uuid ?? uuid;
+
     const curCheck = async (type) => {
-      let itemExists = await actor.items.getName(type);
+      let itemExists = actor.items.getName(type);
+      if (itemExists) return itemExists;
+
       // check for translated languages, default to english
-      const lang = OSRH.util.langCheck;
-      const packName =
-        lang === 'en'
-          ? `${OSRH.moduleName}.${OSRH.moduleName}-items`
-          : `${OSRH.moduleName}.${OSRH.moduleName}-items-${lang}`;
-      let pack = await game.packs.get(packName);
-      if (!itemExists) {
-        const itemId = await pack.index.getName(type)?._id;
-        if (!itemId) {
-          ui.notifications.warn(`${game.i18n.localize('OSRH.notification.noGpFoundActor')}`);
-          return;
-        }
-        let curItm = await pack.getDocument();
-        let itemData = curItm.clone();
-        await actor.createEmbeddedDocuments('Item', [itemData]);
-        return await actor.items.getName(type);
-      } else {
-        return itemExists;
+      const lang = OSRH.util.langCheck();
+      const pack =
+        game.packs.get(`${OSRH.moduleName}.${OSRH.moduleName}-items-${lang}`) ??
+        game.packs.get(`${OSRH.moduleName}.${OSRH.moduleName}-items-en`) ??
+        game.packs.get(`${OSRH.moduleName}.${OSRH.moduleName}-items`);
+      if (!pack) {
+        ui.notifications.warn(`${game.i18n.localize('OSRH.notification.noGpFoundActor')}`);
+        return null;
       }
+      const index = (await pack.getIndex()) ?? pack.index;
+      const entry = index?.getName?.(type) ?? [...(index?.values?.() ?? index ?? [])].find((e) => e.name === type);
+      const itemId = entry?._id ?? entry?.id;
+      if (!itemId) {
+        ui.notifications.warn(`${game.i18n.localize('OSRH.notification.noGpFoundActor')}`);
+        return null;
+      }
+      const curItm = await pack.getDocument(itemId);
+      if (!curItm) return null;
+      const itemData = curItm.toObject();
+      itemData.system = itemData.system ?? {};
+      itemData.system.quantity = { ...(itemData.system.quantity ?? {}), value: 0 };
+      const created = await actor.createEmbeddedDocuments('Item', [itemData]);
+      return created?.[0] ?? actor.items.getName(type);
     };
     const curItem = await curCheck(curCur);
     const newItem = await curCheck(newCur);
-    if (curItem.system.quantity.value < amt) {
+    if (!curItem || !newItem) return;
+
+    if (!Number.isFinite(amt) || amt <= 0 || curItem.system.quantity.value < amt) {
       ui.notifications.warn(`${game.i18n.localize('OSRH.util.notification.notEnough')} ${curCur}`);
-      OSRH.util.curConDiag(actor, amt);
+      OSRH.util.curConDiag(actor, resolvedUuid, Number.isFinite(amt) ? amt : 0);
       return;
     }
     let newVal = (curItem.system.cost * amt) / newItem.system.cost;
-    if (newVal % 1 != 0) {
+    if (!Number.isFinite(newVal) || Math.abs(newVal - Math.round(newVal)) > 1e-6) {
       ui.notifications.warn(game.i18n.localize('OSRH.util.notification.cantConvertFraction'));
-      curConDiag(actor, amt);
+      OSRH.util.curConDiag(actor, resolvedUuid, amt);
       return;
     }
+    newVal = Math.round(newVal);
     await curItem.update({
       system: {
         quantity: {
@@ -508,14 +512,11 @@ export const registerUtil = () => {
     });
   };
   // used
-  OSRH.util.curConDiag = async function (actor, uuid, amt = 0) {
+  OSRH.util.curConDiag = async function (actor, uuid = actor?.uuid, amt = 0) {
+    const resolvedUuid = uuid ?? actor?.uuid;
     let content = `
     <div style="display: flex; height: 75px; align-items: center; justify-content: space-around;">
-     
-       
-     
      <div>${game.i18n.localize('OSRH.util.dialog.amount')}:</div>
-     
      <input id="amt" type="number" value="${amt}">
      <div><b> X </b></div>
      <select id="curCur">
@@ -548,21 +549,20 @@ export const registerUtil = () => {
           label: game.i18n.localize('OSRH.util.dialog.convert'),
           callback: (event, button, dialog) => {
             const html = dialog.element;
-            // let actor = canvas.tokens.controlled[0]?.actor;
-            if (!actor) ui.notifications.warn(game.i18n.localize('OSRH.util.notification.noTokenSelected'));
+            if (!actor && !resolvedUuid) ui.notifications.warn(game.i18n.localize('OSRH.util.notification.noTokenSelected'));
             let curCur = html.querySelector('#curCur').value;
             let newCur = html.querySelector('#newCur').value;
-            let amt = parseInt(html.querySelector('#amt').value);
+            let parsedAmt = parseInt(html.querySelector('#amt').value, 10);
             if (curCur == 'null' || newCur == 'null') {
               ui.notifications.warn(game.i18n.localize('OSRH.util.notification.selectBothCurrency'));
-              OSRH.util.curConDiag(actor, uuid, amt);
+              OSRH.util.curConDiag(actor, resolvedUuid, Number.isFinite(parsedAmt) ? parsedAmt : 0);
               return;
             }
-            OSRH.util.curConvert(amt, curCur, newCur, uuid);// actor,
+            OSRH.util.curConvert(parsedAmt, curCur, newCur, resolvedUuid);
           }
         }
       ]
-    });
+    }).render({ force: true });
   };
   OSRH.util.debounce = function (callback, wait) {
     let timeoutId = null;
@@ -702,12 +702,12 @@ export const registerUtil = () => {
   };
   // used
   OSRH.util.initializeDroppableContainers = async function (actor, html) {
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    if (!root) return;
     // get containers
     let containers = actor.items.filter((i) => i.type == 'container');
     // loop containers
     for (let container of containers) {
-      // get contents
-      let contItems = container.system.itemIds;
       // get is equipped flag
       let isEquipped = await container.getFlag('world', 'equipped');
       // if no flag, create one
@@ -716,8 +716,10 @@ export const registerUtil = () => {
         isEquipped = true;
       }
       let eqpTag = isEquipped ? `item-equipped` : `item-unequipped`;
-      let title = html.find(`[data-item-id ="${container.id}"] h4[title="${container.name}"]`);
-      let element = title[0].parentNode.querySelector(`.item-header .item-controls`);
+      let titleEl = root.querySelector(`[data-item-id="${container.id}"] h4`)
+        ?? root.querySelector(`[data-item-id ="${container.id}"] h4`);
+      let element = titleEl?.parentNode?.querySelector(`.item-header .item-controls`);
+      if (!element) continue;
       // create equip button
       let btnEl = document.createElement('a');
       btnEl.dataset.containerId = container.id;
@@ -765,7 +767,7 @@ export const registerUtil = () => {
     const curLang = game.i18n.lang;
     const langList = OSRH.lang;
     let lang = 'en';
-    if (langList.includes(curLang)) {
+    if (langList?.includes?.(curLang)) {
       lang = curLang;
     }
     return lang;
@@ -774,14 +776,16 @@ export const registerUtil = () => {
   OSRH.util.getItem = async function (item, parent) {
     let itemData = null;
     if (item) {
+      const itemId = item.id ?? item._id;
+      const actorId = item.actor?.id ?? item.actor?._id;
       //wwn
-      if (item.actor && item.actor.prototypeToken.actorLink) {
-        let actor = await game.actors.get(item.actor._id);
-        itemData = await actor.items.get(item._id);
+      if (item.actor && item.actor.prototypeToken?.actorLink) {
+        let actor = await game.actors.get(actorId);
+        itemData = await actor?.items?.get(itemId);
       } else if (item.actor) {
-        itemData = await item.actor.items.get(item._id);
+        itemData = await item.actor.items.get(itemId);
       } else {
-        itemData = await game.items.get(item._id);
+        itemData = await game.items.get(itemId);
       }
     }
     return itemData;
@@ -796,7 +800,9 @@ export const registerUtil = () => {
       if (i.flags?.['osr-helper']?.itemType === type) return true;
       if (tags && Array.isArray(i.system?.tags)) {
         return i.system.tags.some((t) =>
-          typeof t === 'string' ? t.toLowerCase() === targetType : t?.title?.toLowerCase() === targetType
+          typeof t === 'string'
+            ? t.toLowerCase() === targetType
+            : (t?.title?.toLowerCase() === targetType || t?.value?.toLowerCase() === targetType)
         );
       }
       return false;
@@ -814,7 +820,7 @@ export const registerUtil = () => {
   OSRH.util.isRationItem = isRationItem;
   OSRH.util.getRestWarningState = getRestWarningState;
   OSRH.util.dragDropHandler = function (d) {
-    if (game.version >= 13) {
+    if (parseInt(game.version, 10) >= 13) {
       return new foundry.applications.ux.DragDrop.implementation(d);
     } else {
       return new DragDrop(d);
@@ -864,7 +870,7 @@ export const intializePackFolders = async () => {
   }
 };
 export const renderTemplateHandler = async (template, data) =>{
-    if(game.version >= 13){
+    if(parseInt(game.version, 10) >= 13){
       return await foundry.applications.handlebars.renderTemplate(template, data);
     }else{
       return await renderTemplate(template, data);

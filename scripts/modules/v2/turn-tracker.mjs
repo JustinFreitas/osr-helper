@@ -15,7 +15,7 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
   // to the table name; dropping a JournalEntry/Page appends a @UUID link.
   async _onDrop(event) {
     const dragData =
-      Math.floor(game.version) < 13
+      parseInt(game.version, 10) < 13
         ? TextEditor.getDragEventData(event)
         : foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
     if (dragData.type === 'RollTable') {
@@ -75,7 +75,7 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
     let context = await super._prepareContext(options);
     context = foundry.utils.mergeObject(context, {});
     const partyObj = OSRH.util.getPartyActors();
-    const tMod = this.terrainMod[this.turnData.travel.terrain];
+    const tMod = this.terrainMod[this.turnData.travel.terrain] ?? 1;
     context.baseRate = Math.floor(this.getBaseRate(partyObj) * tMod);
     context.characters = this.partyData(partyObj.characters, tMod);
     context.retainers = this.partyData(partyObj.retainers, tMod);
@@ -156,7 +156,7 @@ export class OSRHTurnTrackerV2 extends OSRHApp {
         });
       }
       terrainSelect.addEventListener('change', (e) => {
-        this.updatePartyDist(html, this.terrainMod[e.target.value]);
+        this.updatePartyDist(html, this.terrainMod[e.target.value] ?? 1);
         const chance = this.getTerrainChance(html);
         this.turnData.travel.rollTarget = chance;
         tRollTarget.value = chance;
@@ -383,10 +383,10 @@ _forceTabInit(tabData) {
     }
   }
   getTerrainChance(html) {
-    const terrain = html.querySelector('#terrain').value;
+    const terrain = html.querySelector('#terrain')?.value;
     const terrainEls = [...html.querySelectorAll('option.terrainOpt')];
-    const data = terrainEls.find((i) => i.value === terrain).dataset;
-    return parseInt(data.target);
+    const opt = terrainEls.find((i) => i.value === terrain);
+    return parseInt(opt?.dataset?.target ?? 2, 10);
   }
   getActiveTab(html) {
     let a = html.querySelector('.nav-tab.active');
@@ -474,22 +474,24 @@ _forceTabInit(tabData) {
       [100, 210],
       [0, 140]
     ];
-    restFrame.style.top = `${coords[frame - 1][0]}px` || coords[0][0];
-    restFrame.style.left = `${coords[frame - 1][1]}px` || coords[0][1];
-    restFrame.classList.remove('hidden');
-    lastFrame.classList.add('hidden');
+    const idx = Math.max(0, Math.min(coords.length - 1, (frame || 1) - 1));
+    if (restFrame) {
+      restFrame.style.top = `${coords[idx][0]}px`;
+      restFrame.style.left = `${coords[idx][1]}px`;
+      restFrame.classList.remove('hidden');
+    }
+    if (lastFrame && lastFrame !== restFrame) {
+      lastFrame.classList.add('hidden');
+    }
   }
   // travel turn
   getBaseRate(partyObj) {
-    let slowest;
-    if (partyObj.party.length) {
-      slowest = parseInt(OSRH.util.getNestedValue(partyObj.party[0], this.systemData.paths.encMov)); //partyObj.party[0].system.movement.base;
-      partyObj.party.forEach((a) => {
-        let rate = OSRH.util.getNestedValue(a, this.systemData.paths.encMov); //a.system.movement.base;
-
-        if (slowest > rate) slowest = rate;
-      });
-    }
+    if (!partyObj?.party?.length) return 0;
+    let slowest = parseInt(OSRH.util.getNestedValue(partyObj.party[0], this.systemData.paths.encMov));
+    partyObj.party.forEach((a) => {
+      let rate = parseInt(OSRH.util.getNestedValue(a, this.systemData.paths.encMov));
+      if (slowest > rate) slowest = rate;
+    });
 
     return Math.floor(parseInt(slowest * this.systemData.baseMovMod) / 5);
   }
@@ -519,7 +521,9 @@ _forceTabInit(tabData) {
 
     if (roll.total <= target) {
       let data = {
-        whisper: [game.user],
+        user: game.user.id,
+        whisper: [game.user.id],
+        rolls: [roll],
         flavor: `
         <h3>${game.i18n.localize('OSRH.report.navCheck')}: ${terrain}</h3>
         <span style="color: red">${game.i18n.localize('OSRH.report.navCheckFail')}</span>`
@@ -528,7 +532,9 @@ _forceTabInit(tabData) {
       ChatMessage.create(data);
     } else {
       let data = {
-        whisper: [game.user],
+        user: game.user.id,
+        whisper: [game.user.id],
+        rolls: [roll],
         flavor: `
         <h3>${game.i18n.localize('OSRH.report.navCheck')}: ${terrain}</h3>
         ${game.i18n.localize('OSRH.report.navCheckSuccess')}
@@ -542,7 +548,7 @@ _forceTabInit(tabData) {
   }
   async forageCheck(html) {
     const modEl = html.querySelector('#forage-bonus');
-    const mod = parseInt(modEl.value);
+    const mod = parseInt(modEl.value) || 0;
     const terrain = html.querySelector(`#terrain`).value;
     const gm = game.users.contents.filter((u) => u.role == 4).map((u) => u.id);
     let roll = await new Roll(`1d6 + ${mod}`).evaluate();
@@ -550,7 +556,7 @@ _forceTabInit(tabData) {
       let cData = {
         user: game.user.id,
         whisper: gm,
-        roll: roll,
+        rolls: [roll],
         flavor: `
         <h3>${game.i18n.localize('OSRH.report.forageCheck')}: ${terrain}</h3>
         <div><span style="color: red"><b>${game.i18n.localize('OSRH.report.forageFail')}</b></span></div>
@@ -562,7 +568,7 @@ _forceTabInit(tabData) {
       let cData = {
         user: game.user.id,
         whisper: gm,
-        roll: roll,
+        rolls: [roll],
         flavor: `
         <h3>${game.i18n.localize('OSRH.report.forageCheck')}: ${terrain}</h3>
         <div><span style="color: green"><b>${game.i18n.localize('OSRH.report.forageSuccess')}</b></span></div>
@@ -578,11 +584,12 @@ _forceTabInit(tabData) {
     const charEl = html.querySelector('#character-list');
     const retEl = html.querySelector('#retainer-list');
     const upData = await this.getTravelData(mod);
-    rateEl.innerText = `${upData.baseRate} mi`;
-    charEl.innerHTML = upData.html.characters;
-    retEl.innerHTML = upData.html.retainers;
+    if (rateEl) rateEl.innerText = `${upData.baseRate} mi`;
+    if (charEl) charEl.innerHTML = upData.html.characters;
+    if (retEl) retEl.innerHTML = upData.html.retainers;
   }
   async getTravelData(mod) {
+    const renderTpl = foundry.applications?.handlebars?.renderTemplate ?? renderTemplate;
     const partyObj = OSRH.util.getPartyActors();
     let slowest = this.getBaseRate(partyObj);
     //convert to miles
@@ -595,11 +602,11 @@ _forceTabInit(tabData) {
       },
       html: {}
     };
-    retData.html.characters = await renderTemplate('modules/osr-helper/templates/travel-turn-actor-list.hbs', {
+    retData.html.characters = await renderTpl('modules/osr-helper/templates/travel-turn-actor-list.hbs', {
       header: 'Characters',
       actors: retData.data.characters
     });
-    retData.html.retainers = await renderTemplate('modules/osr-helper/templates/travel-turn-actor-list.hbs', {
+    retData.html.retainers = await renderTpl('modules/osr-helper/templates/travel-turn-actor-list.hbs', {
       header: 'Retainers',
       actors: retData.data.retainers
     });

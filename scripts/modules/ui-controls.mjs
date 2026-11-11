@@ -1,5 +1,4 @@
 import { renderTemplateHandler } from './util.js';
-import { OSRHItemConfig } from './item-config.mjs';
 import { OSRHItemConfigV2 } from './v2/item-config.mjs';
 export const uiControls = {
   async addUiControls() {
@@ -159,7 +158,7 @@ export async function injectOSRHSheetUI(html, object, type) {
           OSRH.report.actorItem(object.document);
           break;
         case 'currency-converter':
-          OSRH.util.curConDiag(object.document);
+          OSRH.util.curConDiag(object.document, object.document?.uuid);
           break;
       }
     });
@@ -168,46 +167,68 @@ export async function injectOSRHSheetUI(html, object, type) {
 }
 
 export function injectV2Controls(app, controls) {
-  const type = app.document?.type
-  if(!type)return
-  if ((app.document instanceof Actor)) {
-    // if (OSRH.ETC.patchedActorV2.has(app)) return;
-    // OSRH.ETC.patchedActorV2.add(app);
-    controls.push(
-      {
+  const type = app.document?.type;
+  if (!type) return;
+  if (app.document instanceof Actor) {
+    if (!controls.some((c) => c.action === 'osrhActiveFx')) {
+      controls.push({
+        action: 'osrhActiveFx',
         icon: 'fas fa-book-skull OSRH-menu',
         label: 'OSRH Active FX',
         onClick: () => {
           OSRH.effect.renderEffectApp(app.document);
         }
+      });
+    }
+    if (game.system.id == 'ose' && app.document.type == 'character') {
+      if (!controls.some((c) => c.action === 'osrhCurrencyConverter')) {
+        controls.push({
+          action: 'osrhCurrencyConverter',
+          icon: 'fas fa-coins OSRH-menu',
+          label: 'OSRH Currency Converter',
+          onClick: () => {
+            OSRH.util.curConDiag(app.document, app.document.uuid);
+          }
+        });
       }
-    );
-    if(game.system.id == 'ose' && app.document.type == 'character'){
-
-      controls.push({
-        icon: 'fas fa-coins OSRH-menu',
-        label: 'OSRH Currency Converter',
-        onClick: () => {
-          OSRH.util.curConDiag(app.document);
-        }
-      })
+      if (
+        game.settings.get('osr-helper', 'displaycustomAttrib') &&
+        app.document.prototypeToken?.actorLink &&
+        !controls.some((c) => c.action === 'osrhCustomAttrib')
+      ) {
+        controls.push({
+          action: 'osrhCustomAttrib',
+          icon: 'fas fa-pen-to-square OSRH-menu',
+          label: 'OSRH Custom Attributes',
+          onClick: () => {
+            new OSRH.ManageCustomAttributes(app.document).render({
+              force: true,
+              position: { top: app.position?.top ?? 120, left: Math.max((app.position?.left ?? 200) - 360, 0) }
+            });
+          }
+        });
+      }
     }
   }
-  if ((app.document instanceof Item)) {
+  if (app.document instanceof Item) {
     const light = OSRH.systemData.lightItemTypes.includes(type);
     const ration = OSRH.systemData.rationItemTypes.includes(type);
     const inject = game.settings.get('osr-helper', 'enableItemConfig');
-    if(!light && !ration) return;
-    if(!inject)return;
-    controls.push(
-      {
+    if (!light && !ration) return;
+    if (!inject) return;
+    if (!controls.some((c) => c.action === 'osrhItemConfig')) {
+      controls.push({
+        action: 'osrhItemConfig',
         icon: 'fas fa-book-skull OSRH-menu',
         label: 'OSRH Config',
         onClick: () => {
-          new OSRHItemConfigV2({item :app.document, ration}).render({ force: true, position: { top: app.position.top, left: app.position.left - 125 } });
+          new OSRHItemConfigV2({ item: app.document, ration }).render({
+            force: true,
+            position: { top: app.position.top, left: app.position.left - 125 }
+          });
         }
-      }
-    )
+      });
+    }
   }
 }
 // OSRH.effect.renderEffectApp(object.document)

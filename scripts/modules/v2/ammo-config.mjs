@@ -28,9 +28,10 @@ export class AmmoConfigV2 extends OSRHApp{
   async _prepareContext(options) {
     let context = await super._prepareContext(options);
     context = foundry.utils.mergeObject(context, {});
-    let ammoData = await this._getAmmoFlag()
-    context.trackAmmo = ammoData?.trackAmmo
+    let ammoData = await this._getAmmoFlag();
+    context.trackAmmo = ammoData?.trackAmmo;
     context.ammoName = ammoData?.items?.[0] || '';
+    this._extraAmmoNames = Array.isArray(ammoData?.items) ? ammoData.items.slice(1) : [];
     return context;
   }
   _onRender(context, options) {
@@ -38,9 +39,18 @@ export class AmmoConfigV2 extends OSRHApp{
     const addItemName = html.querySelector('#add-name-btn');
     const saveBtn = html.querySelector('#save-btn');
     const trackAmmo = html.querySelector('#track-ammo');
+    const nameInputsCont = html.querySelector('.name-inputs');
+    if (this._extraAmmoNames?.length && nameInputsCont) {
+      for (const extraName of this._extraAmmoNames) {
+        this._addNameRow(nameInputsCont, extraName);
+      }
+    }
+    addItemName?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      this._addNameRow(nameInputsCont);
+    });
     let nameInputs = [...html.querySelectorAll('.item-name')];
-    // const nameInpCont = html.find('.name-inputs')[0];
-    const nameRows = [...html.querySelectorAll('.name-row')]
+    const nameRows = [...html.querySelectorAll('.name-row')];
     //name row delete listener
     nameRows.forEach(nameRow => {
       let btn = nameRow.querySelector('.name-del');
@@ -51,13 +61,11 @@ export class AmmoConfigV2 extends OSRHApp{
     })
 
     nameInputs.forEach(inp=>{
-
       let input = inp;
       input.addEventListener('blur', ev=>{
         ev.preventDefault();
         if(!input.value || input.value === ''){
           ui.notifications.warn(game.i18n.localize("OSRH.notification.invalidItemName"));
-          input.focus()
         }
       })
     })
@@ -115,10 +123,11 @@ export class AmmoConfigV2 extends OSRHApp{
     }
     return retVal
   }
-  _addNameRow(contEl){
+  _addNameRow(contEl, value = ''){
     const nameInp = document.createElement('input');
     nameInp.type = 'text';
     nameInp.classList.add('item-name');
+    nameInp.value = value;
     const nameRow = document.createElement('div');
     const delBtn = document.createElement('a');
     const icon = document.createElement('i');

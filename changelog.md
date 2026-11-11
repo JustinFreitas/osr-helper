@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-gygax75.2] 2026-11-11
+### fixes
+- **Foundry V14 ApplicationV2 & Legacy V1 Purge:** Migrated `ManageCustomAttributes` and `CustomAttributeEdit` from removed `FormApplication` to `OSRHApp` (`ApplicationV2`), purged dead V1 classes (`ItemSettingsForm`, `RationConfig`, `TravelReport`, `OSRActiveEffectsApp`) and removed 5 unreferenced legacy V1 `.mjs` files (`ammo-config.mjs`, `attack.mjs`, `item-config.mjs`, `light-item-config.mjs`, `party-sheet/party-sheet.mjs`).
+- **3-Segment Foundry V14 Version Parsing (`14.370.0`):** Replaced unsafe numeric string comparisons (`game.version >= 13`, `Math.floor(game.version) < 13`) with `parseInt(game.version, 10)` in `util.js` and V2 drag-drop handlers so 3-segment semver strings never evaluate to `NaN` and fall back to removed V1 `DragDrop`/`renderTemplate` globals.
+- **Currency Converter & Sheet Controls:** Passed actor UUID to `OSRH.util.curConDiag` on character sheets, resolved compendium currencies via `osr-helper.osr-helper-items-en` (`getIndex`/`getDocument`), added `action` keys and duplicate guards to V2 header controls, and updated all `DialogV2` callers (`curConDiag`, `randomName`, `lightToggle`, `eat`) to pass `{ force: true }`.
+- **Turn Tracker & Encounter Rolls:** Fixed `const encTableName` reassignment crash on Dungeon Level 9+ (`turn.js`), fixed `rollReact` localized reaction text (`result.text`) and V14 `rolls: [roll]` chat schema, formatted V14 `TableResult.documentUuid` links in `travelTurn`, eliminated `restMsg` stale `turnData` overwrite during turn advancement, fixed `handleRestAnimation` crash when resting on turn 0 (upstream `#46`), and guarded empty-party travel calculations against `NaN`.
+- **Party Sheet V2 Formation & Token Spawning:** Fixed `DEFAULT_OPTIONS.position` placement, returned displaced grid actors to `formation.pool` (or swapped cells) instead of dropping them on overwrite, supported dropping onto child `<img>` elements inside grid cells, and fixed `tDoc.actorLink = true` + user/actor guards in the formation `createToken` hook.
+- **Light, Ration, Active Effects & Ammo Fixes:** Guarded `migrationAmmoFlags` to run once per world without mutating linked scene tokens, changed `lightCheck` warning check from exact `==` to threshold `<=` so 10s combat ticks never skip dimming, mapped `bgSat` to `light.saturation`, fixed `turnsRemaining` `warnVal` lookup, prevented in-place mutation of `defaultRationSettings`, fixed inverted ration report color ternary, fixed `animation: "none"` null assignment in `LightConfigV2`, added WWN and multi-ammo support to `OSRHAttackV2`, and unified `OSRActiveEffectsAppV2.validateEffectObject` for both active effects and saved presets.
+- **Release CI & Unit Tests:** Updated `.github/workflows/release.yml` to Node 24 with `node --input-type=commonjs` for `module.json` stamping alongside `"type": "module"`, and added V14 regression suite in `test/osr-helper-v14.test.mjs`.
+
 ## [0.9.0-gygax75.1] 2026-10-17
 ### changed
 - Merged upstream RabidOwlbear/osr-helper **v0.9.0** (`0a63e22` and `92a319d`).

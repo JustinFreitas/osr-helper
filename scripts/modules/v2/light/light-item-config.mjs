@@ -15,7 +15,7 @@ export class LightConfigV2 extends OSRHApp {
   }
 
   static DEFAULT_OPTIONS = {
-    id: 'osrh-app',
+    id: 'osrh-light-config',
     position: {
       width: 300,
       height: 625
@@ -92,12 +92,15 @@ export class LightConfigV2 extends OSRHApp {
           continue;
         }
         let value = i.type == 'color' ? i.value : i.id == 'alpha' ? parseFloat(i.value) : i.id == 'luminosity' ? parseFloat(i.value) : i.id == 'attenuation' ? parseFloat(i.value) : i.id == 'animation' ? i.value : parseInt(i.value);
-        formData[i.id] = value;
         if (i.id == 'animation' && i.value == 'none') value = null;
+        formData[i.id] = value;
       }
       ev.preventDefault();
       updateBtn.blur();
-
+      if (!this.item) {
+        ui.notifications.warn('Please drop a valid light item first.');
+        return;
+      }
       await this.item.setFlag(`${OSRH.moduleName}`, 'lightItemData', formData);
       ui.notifications.info('Light Item Data Updated');
       this.close();
@@ -135,7 +138,7 @@ export class LightConfigV2 extends OSRHApp {
     return true;
   }
   async _onDrop(event) {
-    const data = Math.floor(game.version) < 13 ? TextEditor.getDragEventData(event) : foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    const data = parseInt(game.version, 10) < 13 ? TextEditor.getDragEventData(event) : foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
     const itemTypes = OSRH.systemData.lightItemTypes;
     if (data.type === 'Item') {
       const item = await fromUuid(data.uuid);
